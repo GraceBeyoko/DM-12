@@ -400,11 +400,17 @@ religion |> filter(Religion != "Total") |>
   knitr::kable(caption = "Most popular religion by country and year")
 ```
 
+## Research question description 
+
+Nowadays, the majority of individuals attain a secondary education, marking a notable shift from historical trends. Illiteracy, defined as the incapacity to read or write, was widespread in 1820, with only 12% of the global population possessing these skills. Since then, a significant reversal has occurred. Over the past 65 years, the global literacy rate has consistently increased by 4% every five years, rising from 42% in 1960 to 86% in 2015. Despite this progress, a considerable segment of the population remains illiterate, constituting 14% of the world population as of 2016.The causes behind this persistent illiteracy are subject to debate, with factors such as poverty, population growth, and ineffective government policies often cited. 
+
+However, in our study, we refrain from addressing the "why" question. The scale and methodologies employed are not sufficiently robust for us to draw causal conclusions. Instead, our approach is more observational, focusing on the "who" aspect. Our objective is to identify common characteristics among illiterate individuals, allowing us to observe patterns in this demographic.  To facilitate our study, we opt to concentrate on a specific subset of the illiterate population, namely, the young illiterates (defined here as 15-24 years olds). This demographic will be analysed on a country-by-country basis. Essentially, our aim is to assert whether there are commonalities in countries experiencing high levels of youth illiteracy. To achieve this, we have selected multiple variables that we believe provide insightful information, including institutional stability, overall population, rural population, GDP, GDP per capita, access to electricity, religion, and the percentage of enrolment by educational level, among others.  
+
+At the end of our work, we anticipate two possible outcomes. First, no discernible patterns emerge, which will tell us that the distribution of the illiterate population is genuinely random and relatively evenly spread across the global population. Second, similarities are observed among countries with high levels of illiteracy which will allow us to speculate on potential explanations for illiteracy.
 
 ## Graphical representation of our target variable
 
 First, we want to have a look at the distribution oveer time of Illiterate people (15-24 years old) around the world.
-
 ```{r}
 illiteracy |> filter(Country=="World") |> ggplot(aes(x= Time, y=Value/10^3)) + geom_col() + ylab("Number of illiterate people around the world") + ggtitle("Distribution of Illiteracy (in thousands) over time")
 ```
