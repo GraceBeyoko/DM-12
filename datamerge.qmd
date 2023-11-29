@@ -15,3 +15,4 @@ library(patchwork)
 library(stringr)
 ```
 
+In this document we will merge, when needed, datasets with variables of interest.
