@@ -339,8 +339,9 @@ enrolment |>
 The Rural population is expressed as a percentage of the total population.
 
 This Rural population table has `r rural |> ncol()` columns, which are `r rural |> names()`. It has `r rural |> nrow()` rows and each of them represents a particular country at a particular year. Here is a table with basic statistics of the Rural population variable.
-```{r}
-rural |> group_by(Country) |> 
+```{r, warning= FALSE}
+rural |> 
+  group_by(Country) |> 
   summarise("min" = min(Value, na.rm=TRUE), "median" = median(Value, na.rm=TRUE), "max"= max(Value, na.rm=TRUE), "mean"= mean(Value, na.rm=TRUE)) |> 
   head(n=10) |> 
   knitr::kable(caption= "Statistics of rural population share per year")
@@ -352,7 +353,9 @@ The access to electricity is measured as a percentage of the population.
 
 This access to electricity table has `r electricity |> ncol()` columns, which are `r electricity |> names()`. It has `r electricity |> nrow()` rows and each of them represents a particular country at a particular year. Here is a table with basic statistics of the access to electricity variable.  
 ```{r}
-electricity |> group_by(Country) |> 
+electricity |> 
+  group_by(Country) |> 
+  filter(!(Country %in% c("Kosovo", "American Samoa", "Not classified"))) |>
   summarise("min" = min(Value, na.rm=TRUE), "median" = median(Value, na.rm=TRUE), "max"= max(Value, na.rm=TRUE), "mean"= mean(Value, na.rm=TRUE)) |> 
   head(n=10) |> 
   knitr::kable(caption= "Statistics of electricity access per year")
@@ -392,7 +395,8 @@ This Religion table has `r religion |> ncol()` columns, which are `r religion |>
 religion |> filter(Religion != "Total") |> 
   group_by(Country, Time) |> 
   slice_max(order_by = Value) |> 
-  pull(Religion) |> head(n=10) |> 
+  select(Religion, Country, Time) |> 
+  head(n=10) |> 
   knitr::kable(caption = "Most popular religion by country and year")
 ```
 
