@@ -16,7 +16,7 @@ library(stringr)
 ```
 
 ## Data loading 
-```{r, echo=FALSE, message=FALSE}
+```{r, warning=FALSE, message=FALSE}
 educ_expenditure <- vroom(here("data", "Expenditure on education.csv"), 
                           locale=locale(decimal_mark = "."))
 GDP_capita <- vroom(here("data", "GDP per capita.csv"), 
