@@ -232,7 +232,7 @@ religion |>
 ```
 
 The Reliability variable only takes one value. 
-```{r}
+```{r, warning=FALSE}
 religion |> 
   distinct(Reliability) |> 
   knitr::kable()
@@ -243,7 +243,7 @@ Since our analysis is not based on gender disparity, we are going to only select
 religion <- religion |> 
   filter(Sex=="Both Sexes") |> 
   select(-Sex, -Reliability, - "Value Footnotes", -"Source Year") |>  
-  rename("Country" = "Country or Area")
+  rename("Country" = "Country or Area", "Time" = "Year")
 ```
 
 
@@ -262,71 +262,136 @@ institution <- institution |>
 The government expenditure on education is expressed in millions US$. 
 
 This table has `r educ_expenditure |> ncol()` columns, which are `r educ_expenditure |> names()`.
-
 It has `r educ_expenditure |> nrow()` rows and each of them represents a particular country at a particular year. Here is a table with basic statistics of the Expenditure on education variable.
-
 ```{r}
 educ_expenditure |> 
   filter(Country != "Holy See") |> 
   group_by(Country) |> 
   summarise("min" = min(Value, na.rm=TRUE), "median" = median(Value, na.rm=TRUE), "max"= max(Value, na.rm=TRUE), "mean"= mean(Value, na.rm=TRUE)) |> 
   head(n=10) |> 
-  knitr::kable(caption= "statistics of Expenditure on education per year")
+  knitr::kable(caption= "Statistics of expenditure on education per year")
 ```
+
+
 
 The GDP and GDP per capita are expressed in terms of current US$. 
 
 This GDP table has `r GDP |> ncol()` columns, which are `r GDP |> names()`. It has `r GDP |> nrow()` rows and each of them represents a particular country at a particular year. Here is a table with basic statistics of the GDP variable.  
-
 ```{r}
 GDP |> 
   group_by(Country) |> 
   summarise("min" = min(Value, na.rm=TRUE), "median" = median(Value, na.rm=TRUE), "max"= max(Value, na.rm=TRUE), "mean"= mean(Value, na.rm=TRUE)) |> 
   head(n=10) |> 
-  knitr::kable(caption= "statistics of GDP")
+  knitr::kable(caption= "Statistics of GDP")
 ```
 
 This GDP per capita  table has `r GDP_capita |> ncol()` columns, which are `r GDP_capita |> names()`. It has `r GDP_capita |> nrow()` rows and each of them represents a particular country at a particular year. Here is a table with basic statistics of the GDP per capita variable. 
-
 ```{r}
 GDP_capita |> 
   group_by(Country) |> 
   summarise("min" = min(Value, na.rm=TRUE), "median" = median(Value, na.rm=TRUE), "max"= max(Value, na.rm=TRUE), "mean"= mean(Value, na.rm=TRUE)) |> 
   head(n=10) |>
-  knitr::kable(caption= "statistics of GDP per capita per year")
+  knitr::kable(caption= "Statistics of GDP per capita per year")
 ```
+
+
 
 Life expectancy at birth is expressed in total years.
 
 This Life expectancy at birth table has `r life_expectancy|> ncol()` columns, which are `r life_expectancy |> names()`. It has `r life_expectancy|> nrow()` rows and each of them represents a particular country at a particular year. Here is a table with basic statistics of the Life expectancy at birth variable.  
-
 ```{r}
 life_expectancy |> 
   group_by(Country) |> 
   summarise("min" = min(Value, na.rm=TRUE), "median" = median(Value, na.rm=TRUE), "max"= max(Value, na.rm=TRUE), "mean"= mean(Value, na.rm=TRUE)) |> 
   head(n=10) |> 
-  knitr::kable(caption= "statistics of Life expectancy at birth (years) per year")
+  knitr::kable(caption= "Statistics of life expectancy at birth (years) per year")
 ```
 
-This total population table has `r population |> ncol()` columns, which are `r population |> names()`. It has `r population|> nrow()` rows and each of them represents a particular country at a particular year. Here is a table with basic statistics of the total population variable. 
 
+
+The population is expressed in thousands.
+
+This total population table has `r population |> ncol()` columns, which are `r population |> names()`. It has `r population|> nrow()` rows and each of them represents a particular country at a particular year. Here is a table with basic statistics of the total population variable. 
 ```{r}
 population |> 
   group_by(Country) |> 
   summarise("min" = min(Value, na.rm=TRUE), "median" = median(Value, na.rm=TRUE), "max"= max(Value, na.rm=TRUE), "mean"= mean(Value, na.rm=TRUE)) |> 
   head(n=10) |> 
-  knitr::kable(caption= "statistics of population per year")
+  knitr::kable(caption= "Statistics of population per year")
 ```
+
+
 
 The total net enrolment rate (in upper secondary, lower secondary and primary) of both sexes is expressed in percentage. 
 
 This  total net enrolment rate table has `r enrolment |> ncol()` columns, which are `r enrolment |> names()`. It has `r enrolment |> nrow()` rows and each of them represents a particular country at a particular year. Here is a table with basic statistics of the total net enrolment rate at birth variable.  
-
 ```{r}
 enrolment |> 
   filter(Country != "Holy See") |> 
   group_by(Country) |> 
   summarise("min" = min(Value, na.rm=TRUE), "median" = median(Value, na.rm=TRUE), "max"= max(Value, na.rm=TRUE), "mean"= mean(Value, na.rm=TRUE)) |> 
   head(n=10) |> 
-  knitr::kable(caption= "statistics of Enrolment per year")
+  knitr::kable(caption= "Statistics of enrolment per year")
+```
+
+
+
+The Rural population is expressed as a percentage of the total population.
+
+This Rural population table has `r rural |> ncol()` columns, which are `r rural |> names()`. It has `r rural |> nrow()` rows and each of them represents a particular country at a particular year. Here is a table with basic statistics of the Rural population variable.
+```{r}
+rural |> group_by(Country) |> 
+  summarise("min" = min(Value, na.rm=TRUE), "median" = median(Value, na.rm=TRUE), "max"= max(Value, na.rm=TRUE), "mean"= mean(Value, na.rm=TRUE)) |> 
+  head(n=10) |> 
+  knitr::kable(caption= "Statistics of rural population share per year")
+```
+
+
+
+The access to electricity is measured as a percentage of the population.
+
+This access to electricity table has `r electricity |> ncol()` columns, which are `r electricity |> names()`. It has `r electricity |> nrow()` rows and each of them represents a particular country at a particular year. Here is a table with basic statistics of the access to electricity variable.  
+```{r}
+electricity |> group_by(Country) |> 
+  summarise("min" = min(Value, na.rm=TRUE), "median" = median(Value, na.rm=TRUE), "max"= max(Value, na.rm=TRUE), "mean"= mean(Value, na.rm=TRUE)) |> 
+  head(n=10) |> 
+  knitr::kable(caption= "Statistics of electricity access per year")
+
+```
+
+
+
+The press freedom table shows for each country their rank and index. 
+
+This  press freedom table has `r PressFreedom |> ncol()` columns, which are `r PressFreedom |> names()`. It has `r PressFreedom |> nrow()` rows and each of them represents a particular country at a particular year. Here is a table with basic statistics of the  press freedom variable.  
+```{r}
+PressFreedom |> group_by(Country) |> 
+  summarise("min" = min(Value, na.rm=TRUE), "median" = median(Value, na.rm=TRUE), "max"= max(Value, na.rm=TRUE), "mean"= mean(Value, na.rm=TRUE)) |> 
+  head(n=10) |> 
+  knitr::kable(caption= "Statistics of freedom of press per year")
+```
+
+
+
+The stability of institutions of each country is represented with the Bertelsmann Transformation Index (BTI). This index is a global ranking and analysis of political and economic transformation in developing countries. It is published by the Bertelsmann Stiftung, a German private foundation.
+
+This stability of institutions table has `r institution |> ncol()` columns, which are `r institution |> names()`. It has `r institution|> nrow()` rows and each of them represents a particular country at a particular year. Here is a table with basic statistics of the stability of institutions variable. 
+```{r}
+institution |> group_by(Country) |> 
+  summarise("min" = min(Value, na.rm=TRUE), "median" = median(Value, na.rm=TRUE), "max"= max(Value, na.rm=TRUE), "mean"= mean(Value, na.rm=TRUE)) |> 
+  head(n=10) |> 
+  knitr::kable(caption= "Statistics of institution stability per year")
+```
+
+
+
+The religion table shows the exact number of believers for every religion in each countries display per sexes and as a total (i.e both sexes).
+
+This Religion table has `r religion |> ncol()` columns, which are `r religion |> names()`. It has `r religion |> nrow()` rows and each of them represents in each country the number of a certain religion in a particular year. Here is a table which gives the most practised religion by country and year.
+```{r}
+religion |> filter(Religion != "Total") |> 
+  group_by(Country, Time) |> 
+  slice_max(order_by = Value) |> 
+  pull(Religion) |> head(n=10) |> 
+  knitr::kable(caption = "Most popular religion by country and year")
 ```
