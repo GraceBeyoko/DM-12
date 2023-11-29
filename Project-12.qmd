@@ -395,3 +395,12 @@ religion |> filter(Religion != "Total") |>
   pull(Religion) |> head(n=10) |> 
   knitr::kable(caption = "Most popular religion by country and year")
 ```
+
+
+## Graphical representation of our target variable
+
+First, we want to have a look at the distribution oveer time of Illiterate people (15-24 years old) around the world.
+
+```{r}
+illiteracy |> filter(Country=="World") |> ggplot(aes(x= Time, y=Value/10^3)) + geom_col() + ylab("Number of illiterate people around the world") + ggtitle("Distribution of Illiteracy (in thousands) over time")
+```
