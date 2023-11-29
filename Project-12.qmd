@@ -86,3 +86,51 @@ The World Bank is a financial institution that provides loans and grants to the 
 UNdata is an search engine that provides access to a wide range of statistical databases and other data sources covering various economic, social, demographic, and environmental topics. This service has been developed in partnership with the United Nations Statistics Division and the Statistics Sweden and the Swedish International Development Cooperation Agency in 2008.
 
 The United Nations Educational, Scientific and Cultural Organization (UNESCO) is a specialized agency of the United Nations established in 1945. The organization mission is to contribute to the building of peace, the eradication of poverty, sustainable development and intercultural dialogue through education, sciences and culture. One of their objectives is to ease access to data. That is why, they also produce database about education, culture, science, and communication.
+
+## Data Cleaning 
+
+All the datasets from the UNESCO site have the same structure, as seen below:
+
+The columns' names of the Expenditure on Education dataset are : `r educ_expenditure |> names()`.
+
+The columns' names of the GDP per capita dataset are :`r GDP_capita |> names()`.
+
+The columns' names of the GDP dataset are :`r GDP |> names()`.
+
+The columns' names of the Population dataset are :`r population |> names()`.
+
+The columns' names of the Enrolment by level of Education dataset are :`r enrolment |> names()`.
+
+The columns' names of the Illiteracy dataset are :`r illiteracy |> names()`.
+
+The columns' names of the Rural population share dataset are :`r rural |> names()`.
+
+That is why we can apply the same function to each to the UNESCO datasets. Here we choose to eliminate Flags, Flag Codes and the indicator codes because they do not fall in our research scope. On top of that, we can see that there are two variables, Times and TIMES, that are duplicate of each other as seen in the following. So we will also removes the TIMES column.
+
+```{r}
+sum(educ_expenditure$Time == educ_expenditure$TIME) == nrow(educ_expenditure)
+```
+
+Here, we see that this column contains the same value each time. So, we will also remove this column.
+
+```{r}
+educ_expenditure |> distinct(NATMON_IND)
+```
+
+We will now apply the following function to all of the UNESCO data. 
+
+```{r}
+datacleaning_unesco <- function(data){
+    data |> select(-`Flag Codes`, - Flags, - TIME, -ends_with("IND"))
+}
+```
+
+```{r}
+educ_expenditure <- datacleaning_unesco(educ_expenditure)
+GDP_capita <- datacleaning_unesco(GDP_capita)
+GDP <- datacleaning_unesco(GDP)
+population <- datacleaning_unesco(population)
+enrolment  <- datacleaning_unesco(enrolment)
+illiteracy <-datacleaning_unesco(illiteracy)
+rural <- datacleaning_unesco(rural)
+```
