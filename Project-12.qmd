@@ -14,5 +14,40 @@ library(knitr)
 library(patchwork)
 library(stringr)
 ```
-
-
+## Data loading 
+```{r, echo=FALSE, message=FALSE}
+educ_expenditure <- vroom(here("data", "Expenditure on education.csv"), 
+                          locale=locale(decimal_mark = "."))
+GDP_capita <- vroom(here("data", "GDP per capita.csv"), 
+                    locale=locale(decimal_mark = "."))
+life_expectancy <- vroom(here("data", "life_expectancy.csv"), 
+                         locale=locale(decimal_mark = "."))
+PressFreedom <- vroom(here("data", "PressFreedom.csv"), 
+                      locale=locale(decimal_mark = "."))
+GDP <- vroom(here("data", "GDP.csv"), 
+             locale=locale(decimal_mark = "."))
+population <- vroom(here("data", "population.csv"), 
+                    locale=locale(decimal_mark = "."))
+enrolment  <- vroom(here("data", "enrolment.csv"), 
+                    locale=locale(decimal_mark = "."))
+illiteracy <- vroom(here("data", "illiteracy.csv"), 
+                    locale=locale(decimal_mark = "."))
+electricity <- vroom(here("data", "Electricity.csv"), 
+                     locale=locale(decimal_mark = "."), 
+                     na="..")
+religion <- vroom(here("data", "Religion.csv"), 
+                  locale=locale(decimal_mark = "."))
+institution <- vroom(here("data", "stability-democratic-institutions-index.csv"), 
+                     locale=locale(decimal_mark = "."))
+rural <- vroom("data/Rural.csv", col_types=cols(
+   DEMO_IND = col_character(),
+   Indicator = col_character(),
+   LOCATION = col_character(),
+   Country = col_character(),
+   TIME = col_double(),
+   Time = col_double(),
+   Value = col_double(),
+   `Flag Codes` = col_character(),
+   Flags = col_character(),
+   .delim = ","))
+```
