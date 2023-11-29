@@ -1,0 +1,17 @@
+---
+title: "datasets merging"
+format: html
+---
+
+```{r, message=FALSE, warning=FALSE}
+here::i_am("DM-12.Rproj")
+library(here)
+library(vroom)
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(knitr)
+library(patchwork)
+library(stringr)
+```
+
