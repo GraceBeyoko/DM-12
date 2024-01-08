@@ -139,9 +139,12 @@ rural <- datacleaning_unesco(rural)
 life_expectancy <- datacleaning_unesco(life_expectancy)
 ```
 
+Now let's change the units for the following variables:
 
-
-
+```{r}
+GDP <- GDP |> mutate("Value"= Value/10^6, "Indicator"= "GDP, US$ (millions)")
+population <- population |> mutate("Value"= Value * 10^3, "Indicator"= "Total population (number)")
+```
 
 We now are doing the data cleaning of the electricity variable. 
 ```{r}
