@@ -136,6 +136,7 @@ population <- datacleaning_unesco(population)
 enrolment  <- datacleaning_unesco(enrolment)
 illiteracy <-datacleaning_unesco(illiteracy)
 rural <- datacleaning_unesco(rural)
+life_expectancy <- datacleaning_unesco(life_expectancy)
 ```
 
 
