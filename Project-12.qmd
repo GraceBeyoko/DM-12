@@ -425,3 +425,20 @@ First, we want to have a look at the distribution over time of Illiterate demogr
 ```{r}
 illiteracy |> filter(Country=="World") |> ggplot(aes(x= Time, y=Value/10^3)) + geom_col() + ylab("Number of illiterate people around the world") + ggtitle("Distribution of Illiteracy (in thousands) over time")
 ```
+```{r}
+illiteracy |> filter(Country %in%  c("Sub-Saharan Africa", "Central and Eastern Europe", "South-Eastern Asia", "Central Asia", "Northern Africa and Western Asia", "Eastern and South-Eastern Asia", "Oceania (excluding Australia and New Zealand")) |> ggplot(aes(x= Time, y=Value/10^3)) + geom_col() + ylab("Number of illiterate people per region") + ggtitle("Distribution of Illiteracy (in thousands) over time") + facet_wrap(~Country)
+```
+```{r}
+illiteracy |> filter(Country %in% c("Low income countries", "Upper middle income countries" ,"Least Developed Countries")) |> ggplot(aes(x= Time, y=Value/10^3)) + geom_col() + ylab("Number of illiterate people per region") + ggtitle("Distribution of Illiteracy (in thousands) over time") + facet_wrap(~Country)
+```
+Est-ce qu'il y a un effet de niveau ? Ou pas ?
+
+Donc on fait en pourcentage :
+
+```{r}
+illiterate_rate <- inner_join(illiteracy, young_pop, by = c("Country", "Time")) 
+illiterate_rate <- illiterate_rate |> rename("Illiterate"="Value.x", "YoungPop"="Value.y")
+illiterate_rate <- illiterate_rate |> mutate("illiterate_rate"= Illiterate/YoungPop)
+```
+
+
