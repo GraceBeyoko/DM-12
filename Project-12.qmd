@@ -442,7 +442,7 @@ illiterate_rate <- inner_join(illiteracy, young_pop, by = c("Country", "Time"))
 illiterate_rate <- illiterate_rate |> rename("Illiterate"="Value.x", "YoungPop"="Value.y")
 illiterate_rate <- illiterate_rate |> mutate("illiterate_rate"= Illiterate/YoungPop)
 ```
-
+### NEW
 ```{r}
 CentralAsia <- c("Armenia", "Azerbaijan", "Georgia", "Kazakhstan", "Kyrgyzstan", "Mongolia", "Tajikistan", "Turkmenistan", "Uzbekistan")
 
@@ -465,13 +465,14 @@ SoutheastAsia <- c("Brunei", "Cambodia", "Indonesia", "Laos", "Malaysia", "Myanm
 
 
 ```
-
+### Young Pop regions
 ```{r}
 young_pop_CentralAsia <-
   young_pop |>
   filter(Country %in% CentralAsia) |>
   group_by(Time) |>
   summarise(total_value = sum(Value, na.rm = TRUE))
+young_pop_CentralAsia <- young_pop_CentralAsia |> mutate("Region"= "Central Asia")
 ```
 
 ```{r}
@@ -480,6 +481,7 @@ young_pop_NorthAfricaAndWestAsia <-
   filter(Country %in% NortAfricaAndWestAsia) |>
   group_by(Time) |>
   summarise(total_value = sum(Value, na.rm = TRUE))
+young_pop_NorthAfricaAndWestAsia <-young_pop_NorthAfricaAndWestAsia |> mutate("Region"= "North Africa And West Asia")
 ```
 
 ```{r}
@@ -488,6 +490,7 @@ young_pop_SubSahara <-
   filter(Country %in% SubSahara) |>
   group_by(Time) |>
   summarise(total_value = sum(Value, na.rm = TRUE))
+young_pop_SubSahara <- young_pop_SubSahara |> mutate("Region"="SubSahara")
 ```
 
 ```{r}
@@ -496,6 +499,7 @@ young_pop_CentralAndEasternEurope <-
   filter(Country %in% CentralAndEasternEurope) |>
   group_by(Time) |>
   summarise(total_value = sum(Value, na.rm = TRUE))
+young_pop_CentralAndEasternEurope <- young_pop_CentralAndEasternEurope |> mutate("Region"= "Central And Eastern Europe")
 ```
 
 ```{r}
@@ -504,6 +508,7 @@ young_pop_EastAndSouthEastAsia <-
   filter(Country %in% EastAndSoutheastAsia) |>
   group_by(Time) |>
   summarise(total_value = sum(Value, na.rm = TRUE))
+young_pop_EastAndSouthEastAsia <- young_pop_EastAndSouthEastAsia |> mutate("Region"= "East And South East Asia")
 ```
 
 ```{r}
@@ -512,5 +517,142 @@ young_pop_SouthEastAsia <-
   filter(Country %in% SoutheastAsia) |>
   group_by(Time) |>
   summarise(total_value = sum(Value, na.rm = TRUE))
+young_pop_SouthEastAsia <- young_pop_SouthEastAsia |> mutate("Region"= "South East Asia ")
 ```
+### Illiterate per region
+
+```{r}
+illiteracy_CentralAsia <-
+  illiteracy |>
+  filter(Country %in% CentralAsia) |>
+  group_by(Time) |>
+  summarise(total_value = sum(Value, na.rm = TRUE))
+illiteracy_CentralAsia <- illiteracy_CentralAsia |> mutate("Region"= "Central Asia")
+```
+
+```{r}
+illiteracy_NorthAfricaAndWestAsia <-
+  illiteracy |>
+  filter(Country %in% NortAfricaAndWestAsia) |>
+  group_by(Time) |>
+  summarise(total_value = sum(Value, na.rm = TRUE))
+illiteracy_NorthAfricaAndWestAsia <- illiteracy_NorthAfricaAndWestAsia |> mutate("Region"= "North Africa And West Asia")
+```
+
+```{r}
+illiteracy_SubSahara <-
+  illiteracy |>
+  filter(Country %in% SubSahara) |>
+  group_by(Time) |>
+  summarise(total_value = sum(Value, na.rm = TRUE))
+illiteracy_SubSahara <- illiteracy_SubSahara |> mutate("Region"= "SubSahara")
+```
+
+```{r}
+illiteracy_CentralAndEasternEurope <-
+  illiteracy |>
+  filter(Country %in% CentralAndEasternEurope) |>
+  group_by(Time) |>
+  summarise(total_value = sum(Value, na.rm = TRUE))
+illiteracy_CentralAndEasternEurope <- illiteracy_CentralAndEasternEurope |> mutate("Region"= "Central And Eastern Europe")
+```
+
+```{r}
+illiteracy_EastAndSouthEastAsia <-
+  illiteracy |>
+  filter(Country %in% EastAndSoutheastAsia) |>
+  group_by(Time) |>
+  summarise(total_value = sum(Value, na.rm = TRUE))
+illiteracy_EastAndSouthEastAsia <- illiteracy_EastAndSouthEastAsia |> mutate("Region"= "East And South East Asia")
+```
+
+```{r}
+illiteracy_SouthEastAsia <-
+  illiteracy |>
+  filter(Country %in% SoutheastAsia) |>
+  group_by(Time) |>
+  summarise(total_value = sum(Value, na.rm = TRUE))
+illiteracy_SouthEastAsia <- illiteracy_SouthEastAsia |> mutate("Region"= "South East Asia")
+```
+
+### Concatenation of Regions for Young Population Datasets
+
+```{r}
+young_pop_regions <- rbind(young_pop_CentralAsia, young_pop_NorthAfricaAndWestAsia)
+young_pop_regions <- rbind(young_pop_regions, young_pop_SubSahara)
+young_pop_regions <- rbind(young_pop_regions, young_pop_CentralAndEasternEurope)
+young_pop_regions <- rbind(young_pop_regions, young_pop_EastAndSouthEastAsia)
+young_pop_regions <- rbind(young_pop_regions, young_pop_SouthEastAsia)
+```
+
+### Concatenation of Regions for Illiterate Datasets
+
+```{r}
+illiteracy_regions <- rbind(illiteracy_CentralAsia, illiteracy_NorthAfricaAndWestAsia)
+illiteracy_regions <- rbind(illiteracy_regions, illiteracy_SubSahara)
+illiteracy_regions <- rbind(illiteracy_regions, illiteracy_CentralAndEasternEurope)
+illiteracy_regions <- rbind(illiteracy_regions, illiteracy_EastAndSouthEastAsia)
+illiteracy_regions <- rbind(illiteracy_regions, illiteracy_SouthEastAsia)
+```
+
+### Join of both datasets
+
+```{r}
+graph1_data <- inner_join(illiteracy_regions, young_pop_regions, by = c("Region", "Time")) 
+graph1_data |> mutate("rate"= total_value.x/total_value.y) |> ggplot(aes(x= Time, y=rate)) + geom_col() + ylab("Number of illiterate people per region") + ggtitle("Distribution of Illiteracy (rate) over time") + facet_wrap(~Region)
+```
+Donc c'est pas tellement un effet de taille, mais on a un problème parce que la taille de notre dernier dataset est très petit
+
+### Expenditure in rate
+
+```{r}
+expenditure_rate <- inner_join(educ_expenditure, GDP, by = c("Country", "Time")) 
+expenditure_rate <- expenditure_rate |> mutate("exp_rate"= Value.x/Value.y)
+```
+
+Let's look at its distribution :
+
+```{r}
+expenditure_rate |> 
+  group_by(Time) |>
+  summarise(
+    min = min(exp_rate, na.rm = TRUE),
+    q1 = quantile(exp_rate, 0.25, na.rm = TRUE),
+    median = median(exp_rate, na.rm = TRUE),
+    q3 = quantile(exp_rate, 0.75, na.rm = TRUE),
+    max = max(exp_rate, na.rm = TRUE)
+  ) |>
+  knitr::kable(caption = "Statistics of expenditure rate per year")
+```
+peut-être représenter ça ? 
+On essaie de former 4
+
+```{r}
+expenditure_rate <- expenditure_rate |> 
+  group_by(Time) |> 
+  mutate(group = case_when(
+      exp_rate < quantile(exp_rate, 0.25, na.rm = TRUE) ~ 1,
+      quantile(exp_rate, 0.25, na.rm = TRUE) < exp_rate & exp_rate < median(exp_rate, na.rm = TRUE) ~ 2,
+      median(exp_rate, na.rm = TRUE) < exp_rate & exp_rate < quantile(exp_rate, 0.75, na.rm = TRUE) ~ 3,
+      quantile(exp_rate, 0.75, na.rm = TRUE) < exp_rate ~ 4,
+      TRUE ~ NA ))
+```
+
+### Graphical Representation
+On join illiteracy et expenditure
+```{r}
+expenditure_rate <- expenditure_rate |> select(Country, Time, Indicator.x, group, exp_rate)
+illiteracy <- illiteracy |> rename("Illiteracy"= "Value")
+young_pop <- young_pop |> rename("Population"= "Value")
+
+data_inter <- inner_join(illiteracy, expenditure_rate, by = c("Country", "Time"))
+data_inter <- inner_join(data_inter, young_pop, by = c("Country", "Time"))
+
+```
+On créée un nouveau taux d'expenditure
+
+```{r}
+graph2_data |> group_by(group) |> ggplot(aes(x= Time, y= illiterate_rate)) + geom_col() + ylab("Number of illiterate people per group") + ggtitle("Distribution of Illiteracy (rate) over time") + facet_wrap(~group)
+```
+Voir d'où provient le problème: ce n'est pas normal que le taux soit plus grand que 1
 
