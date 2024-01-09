@@ -51,6 +51,8 @@ rural <- vroom("data/Rural.csv", col_types=cols(
    `Flag Codes` = col_character(),
    Flags = col_character(),
    .delim = ","))
+young_pop <- vroom(here("data", "young_popopulation.csv"), 
+                     locale=locale(decimal_mark = ".")
 ```
 
 ## Github 
@@ -139,6 +141,7 @@ enrolment  <- datacleaning_unesco(enrolment)
 illiteracy <-datacleaning_unesco(illiteracy)
 rural <- datacleaning_unesco(rural)
 life_expectancy <- datacleaning_unesco(life_expectancy)
+young_pop <- datacleaning_unesco(young_pop)
 ```
 
 Now let's change the units for the following variables:
