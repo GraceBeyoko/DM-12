@@ -27,8 +27,6 @@ PressFreedom <- vroom(here("data", "PressFreedom.csv"),
                       locale=locale(decimal_mark = "."))
 GDP <- vroom(here("data", "GDP.csv"), 
              locale=locale(decimal_mark = "."))
-population <- vroom(here("data", "population.csv"), 
-                    locale=locale(decimal_mark = "."))
 enrolment  <- vroom(here("data", "enrolment.csv"), 
                     locale=locale(decimal_mark = "."))
 illiteracy <- vroom(here("data", "illiteracy.csv"), 
@@ -51,8 +49,8 @@ rural <- vroom("data/Rural.csv", col_types=cols(
    `Flag Codes` = col_character(),
    Flags = col_character(),
    .delim = ","))
-young_pop <- vroom(here("data", "young_popopulation.csv"), 
-                     locale=locale(decimal_mark = ".")
+young_pop <- vroom(here("data", "young_population.csv"), 
+                     locale=locale(decimal_mark = "."))
 ```
 
 ## Github 
@@ -104,7 +102,7 @@ The columns' names of the GDP per capita dataset are :`r GDP_capita |> names()`.
 
 The columns' names of the GDP dataset are :`r GDP |> names()`.
 
-The columns' names of the Population dataset are :`r population |> names()`.
+The columns' names of the Young Population dataset are :`r young_pop |> names()`.
 
 The columns' names of the Enrolment by level of Education dataset are :`r enrolment |> names()`.
 
@@ -136,7 +134,6 @@ datacleaning_unesco <- function(data){
 educ_expenditure <- datacleaning_unesco(educ_expenditure)
 GDP_capita <- datacleaning_unesco(GDP_capita)
 GDP <- datacleaning_unesco(GDP)
-population <- datacleaning_unesco(population)
 enrolment  <- datacleaning_unesco(enrolment)
 illiteracy <-datacleaning_unesco(illiteracy)
 rural <- datacleaning_unesco(rural)
@@ -148,7 +145,7 @@ Now let's change the units for the following variables:
 
 ```{r}
 GDP <- GDP |> mutate("Value"= Value/10^6, "Indicator"= "GDP, US$ (millions)")
-population <- population |> mutate("Value"= Value * 10^3, "Indicator"= "Total population (number)")
+young_pop <- young_pop |> mutate("Value"= Value * 10^3, "Indicator"= "Total population (number)")
 ```
 
 We now are doing the data cleaning of the electricity variable. 
@@ -318,15 +315,15 @@ life_expectancy |>
 
 
 
-The population is expressed in thousands.
+The young population is expressed in number.
 
-This total population table has `r population |> ncol()` columns, which are `r population |> names()`. It has `r population|> nrow()` rows and each of them represents a particular country at a particular year. Here is a table with basic statistics of the total population variable. 
+This total young population table has `r population |> ncol()` columns, which are `r population |> names()`. It has `r population|> nrow()` rows and each of them represents a particular country at a particular year. Here is a table with basic statistics of the total population variable. 
 ```{r}
-population |> 
+young_pop |> 
   group_by(Country) |> 
   summarise("min" = min(Value, na.rm=TRUE), "median" = median(Value, na.rm=TRUE), "max"= max(Value, na.rm=TRUE), "mean"= mean(Value, na.rm=TRUE)) |> 
   head(n=10) |> 
-  knitr::kable(caption= "Statistics of population per year")
+  knitr::kable(caption= "Statistics of young population per year")
 ```
 
 
