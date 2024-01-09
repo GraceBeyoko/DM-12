@@ -65,17 +65,19 @@ The Press freedom index and the Access to electricity tables are both sourced fr
 
 The table for the religion per country comes from the the UNdata website, available [here](https://data.un.org/Data.aspx?d=POP&f=tableCode%3A28). 
 
-The rest of our data (GDP, GDP per capita, rural population, life expectancy at birth, public expenditure allocated towards education, the total net enrolment rate by level of education and illiterate population) comes from the UNESCO website, available [here](http://data.uis.unesco.org/?lang=en&SubSessionId=4db844f6-01dd-458d-84db-7a36d4601fa2&themetreeid=-200). To find each of them in the website, we did the following :
+The rest of our data (GDP, GDP per capita, rural population, life expectancy at birth, public expenditure allocated towards education, the total net enrolment rate by level of education, illiterate population and youth population) comes from the UNESCO website, available [here](http://data.uis.unesco.org/?lang=en&SubSessionId=4db844f6-01dd-458d-84db-7a36d4601fa2&themetreeid=-200). To find each of them in the website, we did the following :
 
 - for GDP and GDP per capita, we selected the "demographic and socio-economic" category and then the "socio-economic" section. 
 
 - for rural population and life expectancy at birth, we selected the "demographic and socio-economic" category and then the "demographic" section. 
 
-- For expenditure allocated towards education, we selected the "Education" category then the "Other policy relevant indicators" section and then the "Government expenditure on education as a percentage of GDP" sub-section
+- for expenditure allocated towards education, we selected the "Education" category then the "Other policy relevant indicators" section and then the "Government expenditure on education as a percentage of GDP" sub-section
 
-- For the total net enrolment rate by level of education, we selected the "Education" category then the "Other policy relevant indicators" section and then "Number of students and enrolment/attendance rates by level of education" and then the "Enrolment ratios" sub-section. Here, we choose each level of education but only for both sexes. 
+- for the total net enrolment rate by level of education, we selected the "Education" category then the "Other policy relevant indicators" section and then "Number of students and enrolment/attendance rates by level of education" and then the "Enrolment ratios" sub-section. Here, we choose each level of education but only for both sexes. 
 
-- For illiterate population, we selected the "Education" category then the "Other policy relevant indicators" section then the "Number of illiterates/percentage of illiterate who are female" sub-section and then we select "illiterate population".
+- for illiterate population, we selected the "Education" category then the "Other policy relevant indicators" section then the "Number of illiterates/percentage of illiterate who are female" sub-section and then we select "illiterate population".
+
+- for youth population, we selected the "Demographic and socio-economic" category and then the "demographic indicators" section. 
 
 ## Sources description
 
