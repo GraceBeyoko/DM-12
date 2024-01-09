@@ -123,31 +123,7 @@ educ_expenditure |>
   knitr::kable()
 ```
 
-We will now apply the following function to all of the UNESCO data. 
-```{r}
-datacleaning_unesco <- function(data){
-    data |> select(-`Flag Codes`, - Flags, - TIME, -ends_with("IND"))
-}
-```
-
-```{r}
-educ_expenditure <- datacleaning_unesco(educ_expenditure)
-GDP_capita <- datacleaning_unesco(GDP_capita)
-GDP <- datacleaning_unesco(GDP)
-enrolment  <- datacleaning_unesco(enrolment)
-illiteracy <-datacleaning_unesco(illiteracy)
-rural <- datacleaning_unesco(rural)
-life_expectancy <- datacleaning_unesco(life_expectancy)
-young_pop <- datacleaning_unesco(young_pop)
-```
-
-Now let's change the units for the following variables:
-
-```{r}
-GDP <- GDP |> mutate("Value"= Value/10^6, "Indicator"= "GDP, US$ (millions)")
-young_pop <- young_pop |> mutate("Value"= Value * 10^3, "Indicator"= "Total population (number)")
-```
-
+ 
 We now are doing the data cleaning of the electricity variable. 
 ```{r}
 electricity |> 
