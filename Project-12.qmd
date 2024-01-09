@@ -425,9 +425,11 @@ First, we want to have a look at the distribution over time of Illiterate demogr
 ```{r}
 illiteracy |> filter(Country=="World") |> ggplot(aes(x= Time, y=Value/10^3)) + geom_col() + ylab("Number of illiterate people around the world") + ggtitle("Distribution of Illiteracy (in thousands) over time")
 ```
+
 ```{r}
 illiteracy |> filter(Country %in%  c("Sub-Saharan Africa", "Central and Eastern Europe", "South-Eastern Asia", "Central Asia", "Northern Africa and Western Asia", "Eastern and South-Eastern Asia", "Oceania (excluding Australia and New Zealand")) |> ggplot(aes(x= Time, y=Value/10^3)) + geom_col() + ylab("Number of illiterate people per region") + ggtitle("Distribution of Illiteracy (in thousands) over time") + facet_wrap(~Country)
 ```
+
 ```{r}
 illiteracy |> filter(Country %in% c("Low income countries", "Upper middle income countries" ,"Least Developed Countries")) |> ggplot(aes(x= Time, y=Value/10^3)) + geom_col() + ylab("Number of illiterate people per region") + ggtitle("Distribution of Illiteracy (in thousands) over time") + facet_wrap(~Country)
 ```
@@ -441,4 +443,74 @@ illiterate_rate <- illiterate_rate |> rename("Illiterate"="Value.x", "YoungPop"=
 illiterate_rate <- illiterate_rate |> mutate("illiterate_rate"= Illiterate/YoungPop)
 ```
 
+```{r}
+CentralAsia <- c("Armenia", "Azerbaijan", "Georgia", "Kazakhstan", "Kyrgyzstan", "Mongolia", "Tajikistan", "Turkmenistan", "Uzbekistan")
+
+
+
+NortAfricaAndWestAsia <- c("Algeria", "Egypt", "Libya", "Morocco", "Sudan",  "Tunisia", "Western Sahara", "Azerbaijan", "Armenia",  "Bahrain", "Cyprus", "Georgia", "Iraq", "Israel", "Jordan", "Kuwait", "Lebanon", "Oman", "Palestine",  "Qatar", "Saudi Arabia", "Syrian Arab Republic", "Turkey", "United Arab Emirates", "Yemen")
+
+
+
+SubSahara <- c("Angola", "Benin", "Botswana", "Burkina Faso", "Burundi", "Cabo Verde", "Cameroon", "Central African Republic", "Chad", "Comoros", "Congo, Democratic Republic of", "Congo, Republic of", "Cote d'Ivoire", "Equatorial Guinea", "Eritrea", "Eswatini", "Ethiopia", "Gabon", "Gambia, The", "Ghana", "Guinea", "Guinea-Bissau", "Kenya", "Lesotho", "Liberia", "Madagascar", "Malawi", "Mali", "Mauritania", "Mauritius", "Mozambique", "Namibia", "Niger", "Nigeria", "Rwanda", "Sao Tome and Principe", "Senegal", "Seychelles", "Sierra Leone", "Somalia", "South Africa", "South Sudan", "Sudan", "Tanzania", "Togo", "Uganda", "Zambia", "Zimbabwe")
+
+
+CentralAndEasternEurope <- c("Albania", "Belarus", "Bosnia and Herzegovina", "Bulgaria", "Croatia", "Czech Republic", "Estonia", "Hungary", "Kosovo", "Latvia", "Lithuania", "Moldova", "Montenegro", "North Macedonia", "Poland", "Romania", "Serbia", "Slovakia", "Slovenia", "Ukraine")
+
+
+EastAndSoutheastAsia <- c("Brunei", "Cambodia", "China", "Indonesia", "Japan", "Laos", "Malaysia", "Myanmar", "Philippines", "Singapore", "South Korea", "Thailand", "Timor-Leste", "Vietnam")
+
+
+SoutheastAsia <- c("Brunei", "Cambodia", "Indonesia", "Laos", "Malaysia", "Myanmar", "Philippines", "Singapore", "Thailand", "Timor-Leste", "Vietnam")
+
+
+```
+
+```{r}
+young_pop_CentralAsia <-
+  young_pop |>
+  filter(Country %in% CentralAsia) |>
+  group_by(Time) |>
+  summarise(total_value = sum(Value, na.rm = TRUE))
+```
+
+```{r}
+young_pop_NorthAfricaAndWestAsia <-
+  young_pop |>
+  filter(Country %in% NortAfricaAndWestAsia) |>
+  group_by(Time) |>
+  summarise(total_value = sum(Value, na.rm = TRUE))
+```
+
+```{r}
+young_pop_SubSahara <-
+  young_pop |>
+  filter(Country %in% SubSahara) |>
+  group_by(Time) |>
+  summarise(total_value = sum(Value, na.rm = TRUE))
+```
+
+```{r}
+young_pop_CentralAndEasternEurope <-
+  young_pop |>
+  filter(Country %in% CentralAndEasternEurope) |>
+  group_by(Time) |>
+  summarise(total_value = sum(Value, na.rm = TRUE))
+```
+
+```{r}
+young_pop_EastAndSouthEastAsia <-
+  young_pop |>
+  filter(Country %in% EastAndSoutheastAsia) |>
+  group_by(Time) |>
+  summarise(total_value = sum(Value, na.rm = TRUE))
+```
+
+```{r}
+young_pop_SouthEastAsia <-
+  young_pop |>
+  filter(Country %in% SoutheastAsia) |>
+  group_by(Time) |>
+  summarise(total_value = sum(Value, na.rm = TRUE))
+```
 
