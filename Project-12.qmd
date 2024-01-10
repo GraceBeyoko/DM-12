@@ -398,7 +398,7 @@ At the end of our work, we anticipate two possible outcomes. First, no obvious t
 
 First, we want to have a look at the distribution over time of Illiterate demographic (15-24 years old) around the world.
 ```{r}
-illiteracy |> filter(Country=="World") |> ggplot(aes(x= Time, y=Value/10^3)) + geom_col() + ylab("Number of illiterate people around the world") + ggtitle("Distribution of Illiteracy (in thousands) over time")
+illiteracy |> filter(Country=="World") |> ggplot(aes(x= Time, y=Value/10^3)) + geom_line() + ylab("Number of illiterate people around the world") + ggtitle("Distribution of Illiteracy (in thousands) over time")
 ```
 
 ```{r}
@@ -661,5 +661,11 @@ data_inter |>
 
 
 ```
+
+### Link between enrollment and educ_expenditure rate
+```{r}
+enrol_exp <- inner_join(enrolment, expenditure_rate, by=c("Country", "Time")) |> mutate("Value"= Value/100) |> rename("enrolment"= "Value")
+```
+On doit faire un test statistique doit prendre en compte le fait qu'on a des variables temporelles. 
 
 
