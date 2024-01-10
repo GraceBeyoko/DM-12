@@ -300,7 +300,7 @@ life_expectancy |>
 
 The young population is expressed in number.
 
-This total young population table has `r population |> ncol()` columns, which are `r population |> names()`. It has `r population|> nrow()` rows and each of them represents a particular country at a particular year. Here is a table with basic statistics of the total population variable. 
+This total young population table has `r young_pop |> ncol()` columns, which are `r young_pop |> names()`. It has `r young_pop|> nrow()` rows and each of them represents a particular country at a particular year. Here is a table with basic statistics of the total population variable. 
 ```{r}
 young_pop |> 
   group_by(Country) |> 
@@ -434,6 +434,18 @@ illiterate_rate <- inner_join(illiteracy, young_pop, by = c("Country", "Time"))
 illiterate_rate <- illiterate_rate |> rename("Illiterate"="Value.x", "YoungPop"="Value.y")
 illiterate_rate <- illiterate_rate |> mutate("illiterate_rate"= Illiterate/YoungPop)
 ```
+
+
+
+
+```{r}
+illiterate_rate |> 
+  group_by(Country) |> 
+  summarise("min" = min(illiterate_rate, na.rm=TRUE), "median" = median(illiterate_rate, na.rm=TRUE), "max"= max(illiterate_rate, na.rm=TRUE), "mean"= mean(illiterate_rate, na.rm=TRUE)) |> 
+  head(n=10) |> 
+  knitr::kable(caption= "Statistics of illiterate rate per year")
+```
+
 ### Creation of Regions
 ```{r}
 CentralAsia <- c("Armenia", "Azerbaijan", "Georgia", "Kazakhstan", "Kyrgyzstan", "Mongolia", "Tajikistan", "Turkmenistan", "Uzbekistan")
@@ -623,9 +635,9 @@ On essaie de former 4
 expenditure_rate <- expenditure_rate |> 
   group_by(Time) |> 
   mutate(group = case_when(
-      exp_rate < quantile(exp_rate, 0.25, na.rm = TRUE) ~ 1,
-      quantile(exp_rate, 0.25, na.rm = TRUE) < exp_rate & exp_rate < median(exp_rate, na.rm = TRUE) ~ 2,
-      median(exp_rate, na.rm = TRUE) < exp_rate & exp_rate < quantile(exp_rate, 0.75, na.rm = TRUE) ~ 3,
+      exp_rate <= quantile(exp_rate, 0.25, na.rm = TRUE) ~ 1,
+      quantile(exp_rate, 0.25, na.rm = TRUE) < exp_rate & exp_rate <= median(exp_rate, na.rm = TRUE) ~ 2,
+      median(exp_rate, na.rm = TRUE) < exp_rate & exp_rate <= quantile(exp_rate, 0.75, na.rm = TRUE) ~ 3,
       quantile(exp_rate, 0.75, na.rm = TRUE) < exp_rate ~ 4,
       TRUE ~ NA ))
 ```
@@ -641,6 +653,13 @@ data_inter <- inner_join(illiteracy, expenditure_rate, by = c("Country", "Time")
 data_inter <- inner_join(data_inter, young_pop, by = c("Country", "Time"))
 
 ```
-On créée un nouveau taux d'expenditure
 
-Voir d'où provient le problème: ce n'est pas normal que le taux soit plus grand que 1
+```{r}
+data_inter |>
+  group_by(Time, group) |>
+  summarise(total_illiteracy = sum(Illiteracy, na.rm = TRUE), total_young_pop = sum(Population, na.rm = TRUE)) |> mutate("illiterate rate" = total_illiteracy/total_young_pop ) |> ggplot(aes(x=Time,y=`illiterate rate` )) + geom_col() + ylab("Illiterate rate per group of education expenditure") + ggtitle("Distribution of Illiteracy rate over time per group") + facet_wrap(~group)
+
+
+```
+
+
