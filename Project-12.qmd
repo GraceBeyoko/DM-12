@@ -398,8 +398,11 @@ At the end of our work, we anticipate two possible outcomes. First, no obvious t
 
 First, we want to have a look at the distribution over time of Illiterate demographic (15-24 years old) around the world.
 ```{r}
-illiteracy |> filter(Country=="World") |> ggplot(aes(x= Time, y=Value/10^3)) + geom_line() + ylab("Number of illiterate people around the world") + ggtitle("Distribution of Illiteracy (in thousands) over time")
+illiteracy |> filter(Country=="World") |> ggplot(aes(x= Time, y=Value/10^3)) + geom_line() + ylab("Number of illiterate people around the world") + ggtitle("Evolution of Illiteracy (in thousands) over time")
 ```
+
+
+
 
 ```{r}
 illiteracy |> filter(Country %in%  c("Sub-Saharan Africa", "Central and Eastern Europe", "South-Eastern Asia", "Central Asia", "Northern Africa and Western Asia", "Eastern and South-Eastern Asia", "Oceania (excluding Australia and New Zealand")) |> ggplot(aes(x= Time, y=Value/10^3)) + geom_col() + ylab("Number of illiterate people per region") + ggtitle("Distribution of Illiteracy (in thousands) over time") + facet_wrap(~Country)
@@ -663,9 +666,40 @@ data_inter |>
 ```
 
 ### Link between enrollment and educ_expenditure rate
+
+On doit faire un test statistique
+
+```{r}
+expenditure_rate <- expenditure_rate |> 
+  group_by(Time) |> 
+  mutate(GROUP = case_when(
+      exp_rate <= quantile(exp_rate, 0.10, na.rm = TRUE) ~ 1,
+      quantile(exp_rate, 0.10, na.rm = TRUE) < exp_rate & exp_rate <= quantile(exp_rate, 0.90, na.rm = TRUE) ~ 2,
+      quantile(exp_rate, 0.90, na.rm = TRUE) < exp_rate ~ 3,
+      TRUE ~ NA ))
+```
 ```{r}
 enrol_exp <- inner_join(enrolment, expenditure_rate, by=c("Country", "Time")) |> mutate("Value"= Value/100) |> rename("enrolment"= "Value")
 ```
-On doit faire un test statistique doit prendre en compte le fait qu'on a des variables temporelles. 
+
+```{r}
+enrol_exp|> filter(GROUP!=2) |> ggplot(aes(y = enrolment, fill = Country)) +     geom_boxplot() + facet_wrap(~GROUP) + theme(legend.position = "bottom")
+```
+Faire en sorte que la légende soit par groupe. 
+On voit que pour le top 10%  enrolment est très élevé alors qu'il est plus et pour le bas 10% déjà est bcp plus hétérogène et plus bas de manière générale. 
++ Mettre un tableau avec le nb d'observation pour mettre en perspective. 
+
+### Lien entre enrolment et Illiteracy
+
+FAIRE UN TEST STATISTIQUE pou r une année
+
+### Lien 
 
 
+pour l'instant on a fait 
+illitera par region du monde
+----- par grp de pays en fonction de cmb ils depensenyt dans l'educ
+et la on a fait le lien entre inscript et depense dans l'educ
+ 
+- enrolment vs GDP per cap
+- illiteracy vs GDP per cap
