@@ -410,6 +410,18 @@ illiteracy |> filter(Country %in% c("Low income countries", "Upper middle income
 ```
 Est-ce qu'il y a un effet de niveau ? Ou pas ?
 
+On met young_pop et illiteracy à la même unité.
+On met young_pop en number.
+```{r}
+young_pop <- young_pop |> mutate("Value"= Value * 10^3, "Indicator"= "Population aged 15-24 years (number)")
+```
+On met educ_expenditure et GDP à la même unité.
+On met GDP en millions $.
+
+```{r}
+GDP <- GDP |> mutate("Value"= Value / 10^6, "Indicator"= "GDP, US$ (millions)")
+```
+
 Donc on fait en pourcentage :
 ```{r}
 rate <- function(data){
