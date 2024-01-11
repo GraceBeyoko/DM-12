@@ -9,6 +9,8 @@ library(here)
 library(vroom)
 library(dplyr)
 library(tidyr)
+library(tidyverse)
+library(ggthemes)
 library(ggplot2)
 library(knitr)
 library(patchwork)
@@ -703,3 +705,34 @@ et la on a fait le lien entre inscript et depense dans l'educ
  
 - enrolment vs GDP per cap
 - illiteracy vs GDP per cap
+
+### Map
+```{r}
+world_map <- map_data("world")
+world_map = map_data("world") |> filter(! long > 180)
+
+missing_data <- illiterate_rate |>
+  filter(is.na(YoungPop) | is.na(Illiterate)) |>
+  mutate(MeanRate = NA)  
+
+summarized_data <- illiterate_rate |>
+  group_by(Country) |>
+  summarise("Total young pop" = sum(YoungPop, na.rm = TRUE),
+            "Total illiterate" = sum(Illiterate, na.rm = TRUE),
+            "Mean rate" = `Total illiterate` / `Total young pop` * 100)
+
+combined_data <- bind_rows(summarized_data, missing_data)
+
+ggplot() +
+  geom_map(data = world_map, map = world_map,
+           aes(map_id = region),
+           fill = "grey", color = "white") +
+  geom_map(data = combined_data, map = world_map,
+           aes(fill = `Mean rate`, map_id = Country),
+           color = "white") +
+  expand_limits(x = world_map$long, y = world_map$lat) +
+  coord_map("moll") +
+  theme_map() + ggtitle("Illustration of the world illiteracy mean rate")
+```
+
+
