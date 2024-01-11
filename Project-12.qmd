@@ -695,6 +695,17 @@ On voit que pour le top 10%  enrolment est très élevé alors qu'il est plus et
 
 FAIRE UN TEST STATISTIQUE pou r une année
 
+```{r}
+data13 <- inner_join(illiterate_rate, enrolment, by=c("Country", "Time")) |> mutate("illiterate_per"= illiterate_rate * 100) |> select(-Illiterate, -illiterate_rate, -starts_with("Indicator"), -starts_with("LOCATION")) 
+model <- lm(illiterate_per ~ Value, data=data13)
+summary(model)
+```
+
+```{r}
+inner_join(illiterate_rate, enrolment, by=c("Country", "Time")) |> mutate("illiterate_per"= illiterate_rate * 100) |> select(-Illiterate, -illiterate_rate, -starts_with("Indicator"), -starts_with("LOCATION")) |>  filter(Time == 2021) |> ggplot(aes(x = Value, y= illiterate_per)) + geom_point() +
+    geom_smooth(method = "lm")
+```
+
 ### Lien 
 
 
@@ -735,4 +746,4 @@ ggplot() +
   theme_map() + ggtitle("Illustration of the world illiteracy mean rate")
 ```
 
-
+##
