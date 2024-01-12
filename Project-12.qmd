@@ -36,8 +36,6 @@ illiteracy <- vroom(here("data", "illiteracy.csv"),
 electricity <- vroom(here("data", "Electricity.csv"), 
                      locale=locale(decimal_mark = "."), 
                      na="..")
-religion <- vroom(here("data", "Religion.csv"), 
-                  locale=locale(decimal_mark = "."))
 institution <- vroom(here("data", "stability-democratic-institutions-index.csv"), 
                      locale=locale(decimal_mark = "."))
 rural <- vroom("data/Rural.csv", col_types=cols(
@@ -65,8 +63,6 @@ We used the table from the Our World in Data website for the Stability of democr
 
 The Press freedom index and the Access to electricity tables are both sourced from the World Bank website, respectively available [here](https://govdata360.worldbank.org/indicators/h3f86901f?country=BRA&indicator=32416&viz=line_chart&years=2002,2023) and [here](https://databank.worldbank.org/reports.aspx?source=2&series=EG.ELC.ACCS.ZS&country=#).
 
-The table for the religion per country comes from the the UNdata website, available [here](https://data.un.org/Data.aspx?d=POP&f=tableCode%3A28). 
-
 The rest of our data (GDP, GDP per capita, rural population, life expectancy at birth, public expenditure allocated towards education, the total net enrolment rate by level of education, illiterate population and youth population) comes from the UNESCO website, available [here](http://data.uis.unesco.org/?lang=en&SubSessionId=4db844f6-01dd-458d-84db-7a36d4601fa2&themetreeid=-200). To find each of them in the website, we did the following :
 
 - for GDP and GDP per capita, we selected the "demographic and socio-economic" category and then the "socio-economic" section. 
@@ -86,8 +82,6 @@ The rest of our data (GDP, GDP per capita, rural population, life expectancy at 
 Our World in Data is a free online publication founded by Max Roser, an economist, and directed by the University of Oxford. They focus on providing comprehensive database and data visualizations to make information about global development more accessible. 
 
 The World Bank is a financial institution that provides loans and grants to the governments of developing countries for the purpose of pursuing investments projects. On top of that, they collect, analyse, and publish a wide range of data on various aspects of the economies and societies of their member countries. These data are made available to the public and are widely used by researchers, policy-makers, businesses, and the general public.
-
-UNdata is an search engine that provides access to a wide range of statistical databases and other data sources covering various economic, social, demographic, and environmental topics. This service has been developed in partnership with the United Nations Statistics Division and the Statistics Sweden and the Swedish International Development Cooperation Agency in 2008.
 
 The United Nations Educational, Scientific and Cultural Organization (UNESCO) is a specialized agency of the United Nations established in 1945. The organization mission is to contribute to the building of peace, the eradication of poverty, sustainable development and intercultural dialogue through education, sciences and culture. One of their objectives is to ease access to data. That is why, they also produce database about education, culture, science, and communication.
 
@@ -119,11 +113,13 @@ sum(educ_expenditure$Time == educ_expenditure$TIME) == nrow(educ_expenditure)
 ```
 
 Here, we see that this column contains the same value each time. So, we will also remove this column.
+
 ```{r}
 educ_expenditure |>
   distinct(NATMON_IND) |> 
   knitr::kable()
 ```
+
 We will now apply the following function to all of the UNESCO data.
 
 ```{r}
@@ -141,8 +137,8 @@ illiteracy <-datacleaning_unesco(illiteracy)
 rural <- datacleaning_unesco(rural)
 ```
 
- 
 We now are doing the data cleaning of the electricity variable. 
+
 ```{r}
 electricity |> 
   names()|>
@@ -150,6 +146,7 @@ electricity |>
 ```
 
 Here, we want to see what values these columns take. 
+
 ```{r}
 electricity |> 
   distinct(`Series Code`, `Series Name`) |> 
@@ -157,6 +154,7 @@ electricity |>
 ```
 
 Because access to electricity is our variable of interest, we filter the dataset.
+
 ```{r}
 electricity <- electricity |>
   filter(`Series Name`== "Access to electricity (% of population)")|> 
@@ -164,12 +162,14 @@ electricity <- electricity |>
 ```
 
 We now are going to rename the columns for them to match the other variables from the UNESCO.
+
 ```{r}
 electricity <- electricity |> 
   rename("Country" = "Country Name", "LOCATION"= "Country Code", "Indicator"="Series Name")
 ```
 
 We do pivot_longer in order to have all of our datasets in the same format.
+
 ```{r}
 electricity <- electricity |> 
   pivot_longer(!(Indicator| Country| LOCATION)) |> 
@@ -178,6 +178,7 @@ electricity <- electricity |>
 ```
 
 We now are cleaning the PressFreedom variable.
+
 ```{r}
 PressFreedom |> 
   names() |>
@@ -216,32 +217,8 @@ PressFreedom <- PressFreedom |> pivot_longer(!(LOCATION | Country | Indicator)) 
 ```
 
 
+Since our analysis is not at the individual level, we are going to only select "Both Sexes" values. Then, we will remove the columns we deem unnecessary and rename the remaining columns. 
 
-
-
-We now are cleaning the Religion variable.
-
-First, we want to have a look at the columns names of our dataset.
-```{r}
-religion |> 
-  names() |> 
-  knitr::kable()
-```
-
-The Reliability variable only takes one value. 
-```{r, warning=FALSE}
-religion |> 
-  distinct(Reliability) |> 
-  knitr::kable()
-```
-
-Since our analysis is not based on gender disparity, we are going to only select "Both Sexes" values. Then, we will remove the columns we deem unnecessary and rename the remaining columns. 
-```{r}
-religion <- religion |> 
-  filter(Sex=="Both Sexes") |> 
-  select(-Sex, -Reliability, - "Value Footnotes", -"Source Year") |>  
-  rename("Country" = "Country or Area", "Time" = "Year")
-```
 
 To finish, we now are cleaning the Institution variable, which only consists of renaming its columns. 
 ```{r}
@@ -370,19 +347,6 @@ institution |> group_by(Country) |>
 ```
 
 
-
-The religion table shows the exact number of believers for every religion in each countries display per sexes and as a total (i.e both sexes).
-
-This Religion table has `r religion |> ncol()` columns, which are `r religion |> names()`. It has `r religion |> nrow()` rows and each of them represents in each country the number of a certain religion in a particular year. Here is a table which gives the most practised religion by country and year.
-```{r}
-religion |> filter(Religion != "Total") |> 
-  group_by(Country, Time) |> 
-  slice_max(order_by = Value) |> 
-  select(Religion, Country, Time) |> 
-  head(n=10) |> 
-  knitr::kable(caption = "Most popular religion by country and year")
-```
-
 ## Research question description 
 
 Most people today complete secondary education, which is a major shift from past trends. In the year 1820, only 12 percent of people worldwide were literate, which is defined as the ability of reading and writing. Since then, there has been a notable reversal. The global literacy rate has risen by 4% per five years for the previous 65 years, from 42% in 1960 to 86% in 2015. Even with these advancements, a sizeable portion of the population, 14% of the global population as of 2016, remains illiterate. 
@@ -392,34 +356,31 @@ That being said, the aim of our research is not to answer the "why" question. In
 
 Our goal is to find traits that countries with high levels of young illiterate people have in common so that we can see trends within this group. In order to do so, we choose to focus on the young illiterate population, which is defined as those between the ages of 15 and 24. We'll be looking at this population country by country. Our main goal is to determine whether nations with high rates of youth illiteracy have something in common. 
 
-To achieve this, we have selected multiple variables that we believe provide insightful information, including institutional stability, overall population, rural population, GDP, GDP per capita, access to electricity, religion, and the percentage of enrollment by educational level, among others. 
+To achieve this, we have selected multiple variables that we believe provide insightful information, including institutional stability, overall population, rural population, GDP, GDP per capita, access to electricity, and the percentage of enrollment by educational level, among others. 
 
 At the end of our work, we anticipate two possible outcomes. First, no obvious trends show up, indicating that the distribution of the young illiterate population is actually random and dispersed quite evenly throughout the world's population. Second, similarities are observed among countries with high levels of illiteracy which will allow us to speculate on potential explanations for illiteracy.
+
 
 ## Graphical representation of our target variable
 
 First, we want to have a look at the distribution over time of Illiterate demographic (15-24 years old) around the world.
+
 ```{r}
 illiteracy |> filter(Country=="World") |> ggplot(aes(x= Time, y=Value/10^3)) + geom_line() + ylab("Number of illiterate people around the world") + ggtitle("Evolution of Illiteracy (in thousands) over time")
 ```
 
-
-
-
 ```{r}
-illiteracy |> filter(Country %in%  c("Sub-Saharan Africa", "Central and Eastern Europe", "South-Eastern Asia", "Central Asia", "Northern Africa and Western Asia", "Eastern and South-Eastern Asia", "Oceania (excluding Australia and New Zealand")) |> ggplot(aes(x= Time, y=Value/10^3)) + geom_col() + ylab("Number of illiterate people per region") + ggtitle("Distribution of Illiteracy (in thousands) over time") + facet_wrap(~Country)
+illiteracy |> filter(Country %in%  c("Sub-Saharan Africa", "Central and Eastern Europe", "South-Eastern Asia", "Central Asia", "Northern Africa and Western Asia", "Eastern and South-Eastern Asia", "Oceania (excluding Australia and New Zealand")) |> ggplot(aes(x= Time, y=Value/10^3)) + geom_col() + ylab("Number of illiterate people per region") + ggtitle("Evolution of Illiteracy (in thousands) over time per region") + facet_wrap(~Country)
 ```
 
-```{r}
-illiteracy |> filter(Country %in% c("Low income countries", "Upper middle income countries" ,"Least Developed Countries")) |> ggplot(aes(x= Time, y=Value/10^3)) + geom_col() + ylab("Number of illiterate people per region") + ggtitle("Distribution of Illiteracy (in thousands) over time") + facet_wrap(~Country)
-```
 Est-ce qu'il y a un effet de niveau ? Ou pas ?
-
 On met young_pop et illiteracy à la même unité.
 On met young_pop en number.
+
 ```{r}
 young_pop <- young_pop |> mutate("Value"= Value * 10^3, "Indicator"= "Population aged 15-24 years (number)")
 ```
+
 On met educ_expenditure et GDP à la même unité.
 On met GDP en millions $.
 
@@ -428,6 +389,7 @@ GDP <- GDP |> mutate("Value"= Value / 10^6, "Indicator"= "GDP, US$ (millions)")
 ```
 
 Donc on fait en pourcentage :
+
 ```{r}
 rate <- function(data){
   data_rate <- inner_join(data, young_pop, by = c("Country", "Time"))
@@ -440,16 +402,6 @@ illiterate_rate <- illiterate_rate |> rename("Illiterate"="Value.x", "YoungPop"=
 illiterate_rate <- illiterate_rate |> mutate("illiterate_rate"= Illiterate/YoungPop)
 ```
 
-
-
-
-```{r}
-illiterate_rate |> 
-  group_by(Country) |> 
-  summarise("min" = min(illiterate_rate, na.rm=TRUE), "median" = median(illiterate_rate, na.rm=TRUE), "max"= max(illiterate_rate, na.rm=TRUE), "mean"= mean(illiterate_rate, na.rm=TRUE)) |> 
-  head(n=10) |> 
-  knitr::kable(caption= "Statistics of illiterate rate per year")
-```
 
 ### Creation of Regions
 ```{r}
@@ -471,9 +423,9 @@ EastAndSoutheastAsia <- c("Brunei", "Cambodia", "China", "Indonesia", "Japan", "
 
 
 SoutheastAsia <- c("Brunei", "Cambodia", "Indonesia", "Laos", "Malaysia", "Myanmar", "Philippines", "Singapore", "Thailand", "Timor-Leste", "Vietnam")
-
-
 ```
+
+
 ### Young Pop regions
 ```{r}
 young_pop_CentralAsia <-
@@ -528,8 +480,9 @@ young_pop_SouthEastAsia <-
   summarise(total_value = sum(Value, na.rm = TRUE))
 young_pop_SouthEastAsia <- young_pop_SouthEastAsia |> mutate("Region"= "South East Asia")
 ```
-### Illiterate per region
 
+
+### Illiterate per region
 ```{r}
 illiteracy_CentralAsia <-
   illiteracy |>
@@ -584,8 +537,8 @@ illiteracy_SouthEastAsia <-
 illiteracy_SouthEastAsia <- illiteracy_SouthEastAsia |> mutate("Region"= "South East Asia")
 ```
 
-### Concatenation of Regions for Young Population Datasets
 
+### Concatenation of Regions for Young Population Datasets
 ```{r}
 young_pop_regions <- rbind(young_pop_CentralAsia, young_pop_NorthAfricaAndWestAsia)
 young_pop_regions <- rbind(young_pop_regions, young_pop_SubSahara)
@@ -594,8 +547,8 @@ young_pop_regions <- rbind(young_pop_regions, young_pop_EastAndSouthEastAsia)
 young_pop_regions <- rbind(young_pop_regions, young_pop_SouthEastAsia)
 ```
 
-### Concatenation of Regions for Illiterate Datasets
 
+### Concatenation of Regions for Illiterate Datasets
 ```{r}
 illiteracy_regions <- rbind(illiteracy_CentralAsia, illiteracy_NorthAfricaAndWestAsia)
 illiteracy_regions <- rbind(illiteracy_regions, illiteracy_SubSahara)
@@ -604,118 +557,14 @@ illiteracy_regions <- rbind(illiteracy_regions, illiteracy_EastAndSouthEastAsia)
 illiteracy_regions <- rbind(illiteracy_regions, illiteracy_SouthEastAsia)
 ```
 
-### Join of both datasets
 
+### Join of both datasets
 ```{r}
 graph1_data <- inner_join(illiteracy_regions, young_pop_regions, by = c("Region", "Time")) 
 graph1_data |> mutate("rate"= total_value.x/total_value.y) |> ggplot(aes(x= Time, y=rate)) + geom_col() + ylab("Number of illiterate people per region") + ggtitle("Distribution of Illiteracy (rate) over time") + facet_wrap(~Region)
 ```
+
 Donc c'est pas tellement un effet de taille, mais on a un problème parce que la taille de notre dernier dataset est très petit
-
-### Expenditure in rate
-
-```{r}
-expenditure_rate <- inner_join(educ_expenditure, GDP, by = c("Country", "Time")) 
-expenditure_rate <- expenditure_rate |> mutate("exp_rate"= Value.x/Value.y)
-```
-
-Let's look at its distribution :
-
-```{r}
-expenditure_rate |> 
-  group_by(Time) |>
-  summarise(
-    min = min(exp_rate, na.rm = TRUE),
-    q1 = quantile(exp_rate, 0.25, na.rm = TRUE),
-    median = median(exp_rate, na.rm = TRUE),
-    q3 = quantile(exp_rate, 0.75, na.rm = TRUE),
-    max = max(exp_rate, na.rm = TRUE)
-  ) |>
-  knitr::kable(caption = "Statistics of expenditure rate per year")
-```
-peut-être représenter ça ? 
-On essaie de former 4
-
-```{r}
-expenditure_rate <- expenditure_rate |> 
-  group_by(Time) |> 
-  mutate(group = case_when(
-      exp_rate <= quantile(exp_rate, 0.25, na.rm = TRUE) ~ 1,
-      quantile(exp_rate, 0.25, na.rm = TRUE) < exp_rate & exp_rate <= median(exp_rate, na.rm = TRUE) ~ 2,
-      median(exp_rate, na.rm = TRUE) < exp_rate & exp_rate <= quantile(exp_rate, 0.75, na.rm = TRUE) ~ 3,
-      quantile(exp_rate, 0.75, na.rm = TRUE) < exp_rate ~ 4,
-      TRUE ~ NA ))
-```
-
-### Graphical Representation
-On join illiteracy et expenditure
-```{r}
-expenditure_rate <- expenditure_rate |> select(Country, Time, Indicator.x, group, exp_rate)
-illiteracy <- illiteracy |> rename("Illiteracy"= "Value")
-young_pop <- young_pop |> rename("Population"= "Value")
-
-data_inter <- inner_join(illiteracy, expenditure_rate, by = c("Country", "Time"))
-data_inter <- inner_join(data_inter, young_pop, by = c("Country", "Time"))
-
-```
-
-```{r}
-data_inter |>
-  group_by(Time, group) |>
-  summarise(total_illiteracy = sum(Illiteracy, na.rm = TRUE), total_young_pop = sum(Population, na.rm = TRUE)) |> mutate("illiterate rate" = total_illiteracy/total_young_pop ) |> ggplot(aes(x=Time,y=`illiterate rate` )) + geom_col() + ylab("Illiterate rate per group of education expenditure") + ggtitle("Distribution of Illiteracy rate over time per group") + facet_wrap(~group)
-
-
-```
-
-### Link between enrollment and educ_expenditure rate
-
-On doit faire un test statistique
-
-```{r}
-expenditure_rate <- expenditure_rate |> 
-  group_by(Time) |> 
-  mutate(GROUP = case_when(
-      exp_rate <= quantile(exp_rate, 0.10, na.rm = TRUE) ~ 1,
-      quantile(exp_rate, 0.10, na.rm = TRUE) < exp_rate & exp_rate <= quantile(exp_rate, 0.90, na.rm = TRUE) ~ 2,
-      quantile(exp_rate, 0.90, na.rm = TRUE) < exp_rate ~ 3,
-      TRUE ~ NA ))
-```
-```{r}
-enrol_exp <- inner_join(enrolment, expenditure_rate, by=c("Country", "Time")) |> mutate("Value"= Value/100) |> rename("enrolment"= "Value")
-```
-
-```{r}
-enrol_exp|> filter(GROUP!=2) |> ggplot(aes(y = enrolment, fill = Country)) +     geom_boxplot() + facet_wrap(~GROUP) + theme(legend.position = "bottom")
-```
-Faire en sorte que la légende soit par groupe. 
-On voit que pour le top 10%  enrolment est très élevé alors qu'il est plus et pour le bas 10% déjà est bcp plus hétérogène et plus bas de manière générale. 
-+ Mettre un tableau avec le nb d'observation pour mettre en perspective. 
-
-### Lien entre enrolment et Illiteracy
-
-FAIRE UN TEST STATISTIQUE pou r une année
-
-```{r}
-data13 <- inner_join(illiterate_rate, enrolment, by=c("Country", "Time")) |> mutate("illiterate_per"= illiterate_rate * 100) |> select(-Illiterate, -illiterate_rate, -starts_with("Indicator"), -starts_with("LOCATION")) 
-model <- lm(illiterate_per ~ Value, data=data13)
-summary(model)
-```
-
-```{r}
-inner_join(illiterate_rate, enrolment, by=c("Country", "Time")) |> mutate("illiterate_per"= illiterate_rate * 100) |> select(-Illiterate, -illiterate_rate, -starts_with("Indicator"), -starts_with("LOCATION")) |>  filter(Time == 2021) |> ggplot(aes(x = Value, y= illiterate_per)) + geom_point() +
-    geom_smooth(method = "lm")
-```
-
-### Lien 
-
-
-pour l'instant on a fait 
-illitera par region du monde
------ par grp de pays en fonction de cmb ils depensenyt dans l'educ
-et la on a fait le lien entre inscript et depense dans l'educ
- 
-- enrolment vs GDP per cap
-- illiteracy vs GDP per cap
 
 ### Map
 ```{r}
@@ -746,4 +595,112 @@ ggplot() +
   theme_map() + ggtitle("Illustration of the world illiteracy mean rate")
 ```
 
-##
+
+## Creation groupe
+```{r}
+illiterate_rate <- illiterate_rate |> group_by(Time) |> 
+  mutate(GROUP = case_when(
+      illiterate_rate <= quantile(illiterate_rate, 0.3, na.rm = TRUE) ~ 1,
+      quantile(illiterate_rate, 0.3, na.rm = TRUE) < illiterate_rate & illiterate_rate <= quantile(illiterate_rate, 0.70, na.rm = TRUE) ~ 2,
+      quantile(illiterate_rate, 0.70, na.rm = TRUE) < illiterate_rate ~ 3,
+      TRUE ~ NA ))
+```
+
+### Expenditure in rate
+```{r}
+expenditure_rate <- inner_join(educ_expenditure, GDP, by = c("Country", "Time")) 
+expenditure_rate <- expenditure_rate |> mutate("exp_rate"= Value.x/Value.y)
+```
+
+Let's look at its distribution :
+
+```{r}
+expenditure_rate |> 
+  group_by(Time) |>
+  summarise(
+    min = min(exp_rate, na.rm = TRUE),
+    q1 = quantile(exp_rate, 0.25, na.rm = TRUE),
+    median = median(exp_rate, na.rm = TRUE),
+    q3 = quantile(exp_rate, 0.75, na.rm = TRUE),
+    max = max(exp_rate, na.rm = TRUE)
+  ) |>
+  knitr::kable(caption = "Statistics of expenditure rate per year")
+```
+
+peut-être représenter ça ? 
+On essaie de former 4
+
+```{r}
+expenditure_rate <- expenditure_rate |> 
+  group_by(Time) |> 
+  mutate(group = case_when(
+      exp_rate <= quantile(exp_rate, 0.25, na.rm = TRUE) ~ 1,
+      quantile(exp_rate, 0.25, na.rm = TRUE) < exp_rate & exp_rate <= median(exp_rate, na.rm = TRUE) ~ 2,
+      median(exp_rate, na.rm = TRUE) < exp_rate & exp_rate <= quantile(exp_rate, 0.75, na.rm = TRUE) ~ 3,
+      quantile(exp_rate, 0.75, na.rm = TRUE) < exp_rate ~ 4,
+      TRUE ~ NA ))
+```
+
+
+### Graphical Representation
+
+On join illiteracy et expenditure
+
+```{r}
+expenditure_rate <- expenditure_rate |> select(Country, Time, Indicator.x, group, exp_rate)
+illiteracy <- illiteracy |> rename("Illiteracy"= "Value")
+young_pop <- young_pop |> rename("Population"= "Value")
+
+data_inter <- inner_join(illiteracy, expenditure_rate, by = c("Country", "Time"))
+data_inter <- inner_join(data_inter, young_pop, by = c("Country", "Time"))
+
+```
+
+```{r}
+data_inter |>
+  group_by(Time, group) |>
+  summarise(total_illiteracy = sum(Illiteracy, na.rm = TRUE), total_young_pop = sum(Population, na.rm = TRUE)) |> mutate("illiterate rate" = total_illiteracy/total_young_pop ) |> ggplot(aes(x=Time,y=`illiterate rate` )) + geom_col() + ylab("Illiterate rate per group of education expenditure") + ggtitle("Distribution of Illiteracy rate over time per group") + facet_wrap(~group)
+```
+
+
+### Link between enrollment and educ_expenditure rate
+
+On doit faire un test statistique
+
+```{r}
+expenditure_rate <- expenditure_rate |> 
+  group_by(Time) |> 
+  mutate(GROUP = case_when(
+      exp_rate <= quantile(exp_rate, 0.10, na.rm = TRUE) ~ 1,
+      quantile(exp_rate, 0.10, na.rm = TRUE) < exp_rate & exp_rate <= quantile(exp_rate, 0.90, na.rm = TRUE) ~ 2,
+      quantile(exp_rate, 0.90, na.rm = TRUE) < exp_rate ~ 3,
+      TRUE ~ NA ))
+```
+
+```{r}
+enrol_exp <- inner_join(enrolment, expenditure_rate, by=c("Country", "Time")) |> mutate("Value"= Value/100) |> rename("enrolment"= "Value")
+```
+
+```{r}
+enrol_exp|> filter(GROUP!=2) |> ggplot(aes(y = enrolment, fill = Country)) +     geom_boxplot() + facet_wrap(~GROUP) + theme(legend.position = "bottom")
+```
+
+Faire en sorte que la légende soit par groupe. 
+On voit que pour le top 10%  enrolment est très élevé alors qu'il est plus et pour le bas 10% déjà est bcp plus hétérogène et plus bas de manière générale. 
++ Mettre un tableau avec le nb d'observation pour mettre en perspective. 
+
+### Lien entre enrolment et Illiteracy
+
+FAIRE UN TEST STATISTIQUE pou r une année
+
+```{r}
+data13 <- inner_join(illiterate_rate, enrolment, by=c("Country", "Time")) |> mutate("illiterate_per"= illiterate_rate * 100) |> select(-Illiterate, -illiterate_rate, -starts_with("Indicator"), -starts_with("LOCATION")) 
+model <- lm(illiterate_per ~ Value, data=data13)
+summary(model)
+```
+
+```{r}
+inner_join(illiterate_rate, enrolment, by=c("Country", "Time")) |> mutate("illiterate_per"= illiterate_rate * 100) |> select(-Illiterate, -illiterate_rate, -starts_with("Indicator"), -starts_with("LOCATION")) |>  filter(Time == 2021) |> ggplot(aes(x = Value, y= illiterate_per)) + geom_point() +
+    geom_smooth(method = "lm")
+```
+
