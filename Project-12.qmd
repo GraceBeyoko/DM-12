@@ -227,7 +227,11 @@ Since our analysis is not at the individual level, we are going to only select "
 To finish, we now are cleaning the Institution variable, which only consists of renaming its columns. 
 ```{r}
 institution <- institution |> 
+<<<<<<< HEAD
   rename("Country"="Entity", "LOCATION"= "Code", "Time"= "Year","Value"="stability_dem_inst_bti")|>
+=======
+  rename("Country" = "Entity", "LOCATION"= "Code", "Value"= "stability_dem_inst_bti", "Time"= "Year", "Stability of Institutions" ="Value")|>
+>>>>>>> d1f9c099325afa64b819909269225243d9451ce5
   mutate("Indicator"= "Stability of Institutions")
 ```
 
@@ -414,10 +418,22 @@ ggplot() +
 
 
 
+## Creation groupe
+```{r}
+illiterate_rate <- illiterate_rate |> group_by(Time) |> 
+  mutate(GROUP = case_when(
+      illiterate_rate <= quantile(illiterate_rate, 0.3, na.rm = TRUE) ~ 1,
+      quantile(illiterate_rate, 0.3, na.rm = TRUE) < illiterate_rate & illiterate_rate <= quantile(illiterate_rate, 0.70, na.rm = TRUE) ~ 2,
+      quantile(illiterate_rate, 0.70, na.rm = TRUE) < illiterate_rate ~ 3,
+      TRUE ~ NA ))
+```
 
+### Graphical Representation
+```{r}
+expenditure_rate <- inner_join(educ_expenditure, GDP, by = c("Country", "Time")) 
+expenditure_rate <- expenditure_rate |> mutate("exp_rate"= Value.x/Value.y)
+```
 
-
-On joint illiteracy et expenditure
 
 ```{r}
 expenditure_rate <- expenditure_rate |> select(Country, Time, -Indicator.x, exp_rate)
@@ -427,25 +443,22 @@ young_pop <- young_pop |> rename("Population"= "Value")
 
 
 ```{r}
+data_inter <- inner_join(illiterate_rate, expenditure_rate, by = c("Country", "Time"))
+data_inter <- inner_join(data_inter, young_pop, by = c("Country", "Time"))
+```
+
+
+```{r}
 data_inter |> filter(GROUP != 2) |> ggplot(aes(fill=as.factor(GROUP), y=exp_rate, x=as.factor(Time))) + geom_boxplot(position="dodge", alpha=0.5) + coord_flip()+ guides(fill = guide_legend(title = "Group")) + labs(title = "Boxplot of Expenditure on Education Rate Over Time per group",x = "Time", y = "Expenditure on Education Rate") 
 ```
 
 
-### Link between enrollment and educ_expenditure rate
-
-FAIRE PAR GROUPE !!!!!!!! PUIS BOUGER
-
 ```{r}
 enrol_exp <- inner_join(enrolment, expenditure_rate, by=c("Country", "Time")) |> mutate("Value"= Value/100) |> rename("enrolment"= "Value")
 ```
-
 ```{r}
 lm(enrolment ~ exp_rate + as.factor(Time), data = enrol_exp) |> summary()
 ```
-Interprétation
-
-### Lien entre enrolment et Illiteracy
-
 
 ```{r}
 illiteracy_enrol <- inner_join(illiterate_rate, enrolment, by=c("Time", "Country"))
@@ -463,30 +476,6 @@ scatterplot3d(x = illiteracy_enrol$Time, y = illiteracy_enrol$illiterate_rate, z
               color = color_palette[as.numeric(illiteracy_enrol$GROUP)], pch = 16, angle = 130,
               xlab = "Time", ylab = "Illiterate rate ", zlab = "Enrolement ",
               main = "3D Scatter Plot with Time, Illiterate rate, and Enrolement")
-
-```
-
-
-
-
-
-FAIRE UN TEST STATISTIQUE pou r une année
-
-```{r}
-data13 <- inner_join(illiterate_rate, enrolment, by=c("Country", "Time")) |> mutate("illiterate_per"= illiterate_rate * 100) |> select(-Illiterate, -illiterate_rate, -starts_with("Indicator"), -starts_with("LOCATION")) 
-model <- lm(illiterate_per ~ Value, data=data13)
-summary(model)
-```
-
-```{r}
-inner_join(illiterate_rate, enrolment, by=c("Country", "Time")) |> mutate("illiterate_per"= illiterate_rate * 100) |> select(-Illiterate, -illiterate_rate, -starts_with("Indicator"), -starts_with("LOCATION")) |>  filter(Time == 2021) |> ggplot(aes(x = Value, y= illiterate_per)) + geom_point() +
-    geom_smooth(method = "lm")
-```
-
-##Illiteracy vs life-expectancy vs rural
-
-```{r}
-
 ```
 
 
