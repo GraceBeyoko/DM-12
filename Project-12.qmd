@@ -213,7 +213,10 @@ PressFreedomRank <- PressFreedom |> filter(Indicator == "Press Freedom Rank")
 ```
 
 ```{r}
-PressFreedom <- PressFreedom |> pivot_longer(!(LOCATION | Country | Indicator)) |> rename("Time"="name", "Value"="value")
+PressFreedomIndex <- PressFreedomIndex |>
+  pivot_longer(!(Indicator | Country | LOCATION)) |>
+  rename("Time" = "name", "Press Freedom Index" = "value") |>
+  mutate(Time = ifelse(is.na(Time), NA, as.numeric(Time))) |> filter(Time >= 2005 & Time <= 2021)
 ```
 
 
@@ -223,7 +226,7 @@ Since our analysis is not at the individual level, we are going to only select "
 To finish, we now are cleaning the Institution variable, which only consists of renaming its columns. 
 ```{r}
 institution <- institution |> 
-  rename("Country" = "Entity", "LOCATION"= "Code", "Value"= "stability_dem_inst_bti")|>
+  rename("Country" = "Entity", "LOCATION"= "Code", "Value"= "stability_dem_inst_bti", "Time"= "Year", "Stability of Institutions" ="Value")|>
   mutate("Indicator"= "Stability of Institutions")
 ```
 
@@ -605,61 +608,23 @@ illiterate_rate <- illiterate_rate |> group_by(Time) |>
       quantile(illiterate_rate, 0.70, na.rm = TRUE) < illiterate_rate ~ 3,
       TRUE ~ NA ))
 ```
-
-### Expenditure in rate
+### Graphical Representation
 ```{r}
 expenditure_rate <- inner_join(educ_expenditure, GDP, by = c("Country", "Time")) 
 expenditure_rate <- expenditure_rate |> mutate("exp_rate"= Value.x/Value.y)
 ```
 
-Let's look at its distribution :
+On joint illiteracy et expenditure
 
 ```{r}
-expenditure_rate |> 
-  group_by(Time) |>
-  summarise(
-    min = min(exp_rate, na.rm = TRUE),
-    q1 = quantile(exp_rate, 0.25, na.rm = TRUE),
-    median = median(exp_rate, na.rm = TRUE),
-    q3 = quantile(exp_rate, 0.75, na.rm = TRUE),
-    max = max(exp_rate, na.rm = TRUE)
-  ) |>
-  knitr::kable(caption = "Statistics of expenditure rate per year")
-```
-
-peut-être représenter ça ? 
-On essaie de former 4
-
-```{r}
-expenditure_rate <- expenditure_rate |> 
-  group_by(Time) |> 
-  mutate(group = case_when(
-      exp_rate <= quantile(exp_rate, 0.25, na.rm = TRUE) ~ 1,
-      quantile(exp_rate, 0.25, na.rm = TRUE) < exp_rate & exp_rate <= median(exp_rate, na.rm = TRUE) ~ 2,
-      median(exp_rate, na.rm = TRUE) < exp_rate & exp_rate <= quantile(exp_rate, 0.75, na.rm = TRUE) ~ 3,
-      quantile(exp_rate, 0.75, na.rm = TRUE) < exp_rate ~ 4,
-      TRUE ~ NA ))
-```
-
-
-### Graphical Representation
-
-On join illiteracy et expenditure
-
-```{r}
-expenditure_rate <- expenditure_rate |> select(Country, Time, Indicator.x, group, exp_rate)
-illiteracy <- illiteracy |> rename("Illiteracy"= "Value")
+expenditure_rate <- expenditure_rate |> select(Country, Time, -Indicator.x, exp_rate)
 young_pop <- young_pop |> rename("Population"= "Value")
 
-data_inter <- inner_join(illiteracy, expenditure_rate, by = c("Country", "Time"))
+data_inter <- inner_join(illiterate_rate, expenditure_rate, by = c("Country", "Time"))
 data_inter <- inner_join(data_inter, young_pop, by = c("Country", "Time"))
-
 ```
-
 ```{r}
-data_inter |>
-  group_by(Time, group) |>
-  summarise(total_illiteracy = sum(Illiteracy, na.rm = TRUE), total_young_pop = sum(Population, na.rm = TRUE)) |> mutate("illiterate rate" = total_illiteracy/total_young_pop ) |> ggplot(aes(x=Time,y=`illiterate rate` )) + geom_col() + ylab("Illiterate rate per group of education expenditure") + ggtitle("Distribution of Illiteracy rate over time per group") + facet_wrap(~group)
+data_inter |> filter(GROUP != 2) |> ggplot(aes(fill=as.factor(GROUP), y=exp_rate, x=as.factor(Time))) + geom_boxplot(position="dodge", alpha=0.5) + coord_flip()+ guides(fill = guide_legend(title = "Group")) + labs(title = "Boxplot of Expenditure on Education Rate Over Time per group",x = "Time", y = "Expenditure on Education Rate") 
 ```
 
 
@@ -668,26 +633,12 @@ data_inter |>
 On doit faire un test statistique
 
 ```{r}
-expenditure_rate <- expenditure_rate |> 
-  group_by(Time) |> 
-  mutate(GROUP = case_when(
-      exp_rate <= quantile(exp_rate, 0.10, na.rm = TRUE) ~ 1,
-      quantile(exp_rate, 0.10, na.rm = TRUE) < exp_rate & exp_rate <= quantile(exp_rate, 0.90, na.rm = TRUE) ~ 2,
-      quantile(exp_rate, 0.90, na.rm = TRUE) < exp_rate ~ 3,
-      TRUE ~ NA ))
-```
-
-```{r}
 enrol_exp <- inner_join(enrolment, expenditure_rate, by=c("Country", "Time")) |> mutate("Value"= Value/100) |> rename("enrolment"= "Value")
 ```
-
 ```{r}
-enrol_exp|> filter(GROUP!=2) |> ggplot(aes(y = enrolment, fill = Country)) +     geom_boxplot() + facet_wrap(~GROUP) + theme(legend.position = "bottom")
+lm(enrolment ~ exp_rate + as.factor(Time), data = enrol_exp) |> summary()
 ```
-
-Faire en sorte que la légende soit par groupe. 
-On voit que pour le top 10%  enrolment est très élevé alors qu'il est plus et pour le bas 10% déjà est bcp plus hétérogène et plus bas de manière générale. 
-+ Mettre un tableau avec le nb d'observation pour mettre en perspective. 
+Interprétation
 
 ### Lien entre enrolment et Illiteracy
 
