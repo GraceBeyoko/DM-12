@@ -226,13 +226,7 @@ Since our analysis is not at the individual level, we are going to only select "
 
 To finish, we now are cleaning the Institution variable, which only consists of renaming its columns. 
 ```{r}
-institution <- institution |> 
-<<<<<<< HEAD
-  rename("Country"="Entity", "LOCATION"= "Code", "Time"= "Year","Value"="stability_dem_inst_bti")|>
-=======
-  rename("Country" = "Entity", "LOCATION"= "Code", "Value"= "stability_dem_inst_bti", "Time"= "Year", "Stability of Institutions" ="Value")|>
->>>>>>> d1f9c099325afa64b819909269225243d9451ce5
-  mutate("Indicator"= "Stability of Institutions")
+institution <- institution |> rename("Country" = "Entity", "LOCATION"= "Code", "Value"= "stability_dem_inst_bti", "Time"= "Year")|> mutate("Indicator"= "Stability of Institutions")
 ```
 
 ## Data description and Tables 
@@ -291,7 +285,7 @@ This total young population table has `r young_pop |> ncol()` columns, which are
 ```{r}
 young_pop |> 
   group_by(Country) |> 
-  summarise("min" = min(Population, na.rm=TRUE), "median" = median(Population, na.rm=TRUE), "max"= max(Population, na.rm=TRUE), "mean"= round(mean(Population, na.rm=TRUE),2)) |> 
+  summarise("min" = min(Value, na.rm=TRUE), "median" = median(Value, na.rm=TRUE), "max"= max(Value, na.rm=TRUE), "mean"= round(mean(Value, na.rm=TRUE),2)) |> 
   head(n=10) |> 
   knitr::kable(caption= "Statistics of young population per year")
 ```
@@ -468,8 +462,6 @@ illiteracy_enrol <- inner_join(illiterate_rate, enrolment, by=c("Time", "Country
 ```{r}
 library(scatterplot3d)
 library(RColorBrewer)
-library(plot3D)
-
 color_palette <- brewer.pal(5, "Set3")
 
 scatterplot3d(x = illiteracy_enrol$Time, y = illiteracy_enrol$illiterate_rate, z = illiteracy_enrol$Value, 
@@ -478,4 +470,17 @@ scatterplot3d(x = illiteracy_enrol$Time, y = illiteracy_enrol$illiterate_rate, z
               main = "3D Scatter Plot with Time, Illiterate rate, and Enrolement")
 ```
 
+### Lien entre illiteracy vs. electricity vs. Rural
+```{r}
+rural <- rural |> rename("rural_per"="Value")
+electricity <- electricity |> rename("electricity_per"="Value")
+GDP_capita <- GDP_capita |> rename("GDP per capita"="Value")
+```
+
+```{r}
+inner_join(illiterate_rate, electricity, by = c("Time", "Country")) |>  inner_join(rural, by = c("Time", "Country")) |> inner_join(GDP_capita, by = c("Time", "Country")) |> filter(Time == 2021) |> 
+ggplot(aes(x = `GDP per capita`, y = illiterate_rate,size =rural_per, color = electricity_per)) +
+geom_point(alpha = .3) + scale_color_gradient(low = "green", high = "red") + theme_minimal(base_size = 14)
+
+```
 
