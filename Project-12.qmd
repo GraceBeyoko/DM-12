@@ -15,6 +15,7 @@ library(ggplot2)
 library(knitr)
 library(patchwork)
 library(stringr)
+library(scatterplot3d)
 ```
 
 ## Data loading 
@@ -213,7 +214,10 @@ PressFreedomRank <- PressFreedom |> filter(Indicator == "Press Freedom Rank")
 ```
 
 ```{r}
-PressFreedom <- PressFreedom |> pivot_longer(!(LOCATION | Country | Indicator)) |> rename("Time"="name", "Value"="value")
+PressFreedomIndex <- PressFreedomIndex |>
+  pivot_longer(!(Indicator | Country | LOCATION)) |>
+  rename("Time" = "name", "Press Freedom Index" = "value") |>
+  mutate(Time = ifelse(is.na(Time), NA, as.numeric(Time))) |> filter(Time >= 2005 & Time <= 2021)
 ```
 
 
@@ -223,7 +227,7 @@ Since our analysis is not at the individual level, we are going to only select "
 To finish, we now are cleaning the Institution variable, which only consists of renaming its columns. 
 ```{r}
 institution <- institution |> 
-  rename("Country" = "Entity", "LOCATION"= "Code", "Value"= "stability_dem_inst_bti")|>
+  rename("Country"="Entity", "LOCATION"= "Code", "Time"= "Year","Value"="stability_dem_inst_bti")|>
   mutate("Indicator"= "Stability of Institutions")
 ```
 
@@ -237,7 +241,7 @@ It has `r educ_expenditure |> nrow()` rows and each of them represents a particu
 educ_expenditure |> 
   filter(Country != "Holy See") |> 
   group_by(Country) |> 
-  summarise("min" = min(Value, na.rm=TRUE), "median" = median(Value, na.rm=TRUE), "max"= max(Value, na.rm=TRUE), "mean"= mean(Value, na.rm=TRUE)) |> 
+  summarise("min" = round(min(Value, na.rm=TRUE), 2), "median" = round(median(Value, na.rm=TRUE), 2), "max"= round(max(Value, na.rm=TRUE), 2), "mean"= round(mean(Value, na.rm=TRUE), 2)) |> 
   head(n=10) |> 
   knitr::kable(caption= "Statistics of expenditure on education per year")
 ```
@@ -259,7 +263,7 @@ This GDP per capita  table has `r GDP_capita |> ncol()` columns, which are `r GD
 ```{r}
 GDP_capita |> 
   group_by(Country) |> 
-  summarise("min" = min(Value, na.rm=TRUE), "median" = median(Value, na.rm=TRUE), "max"= max(Value, na.rm=TRUE), "mean"= mean(Value, na.rm=TRUE)) |> 
+  summarise("min" = min(Value, na.rm=TRUE), "median" = median(Value, na.rm=TRUE), "max"= max(Value, na.rm=TRUE), "mean"= round(mean(Value, na.rm=TRUE), 2)) |> 
   head(n=10) |>
   knitr::kable(caption= "Statistics of GDP per capita per year")
 ```
@@ -272,7 +276,7 @@ This Life expectancy at birth table has `r life_expectancy|> ncol()` columns, wh
 ```{r}
 life_expectancy |> 
   group_by(Country) |> 
-  summarise("min" = min(Value, na.rm=TRUE), "median" = median(Value, na.rm=TRUE), "max"= max(Value, na.rm=TRUE), "mean"= mean(Value, na.rm=TRUE)) |> 
+  summarise("min" = min(Value, na.rm=TRUE), "median" = median(Value, na.rm=TRUE), "max"= max(Value, na.rm=TRUE), "mean"= round(mean(Value, na.rm=TRUE),2)) |> 
   head(n=10) |> 
   knitr::kable(caption= "Statistics of life expectancy at birth (years) per year")
 ```
@@ -283,7 +287,7 @@ This total young population table has `r young_pop |> ncol()` columns, which are
 ```{r}
 young_pop |> 
   group_by(Country) |> 
-  summarise("min" = min(Value, na.rm=TRUE), "median" = median(Value, na.rm=TRUE), "max"= max(Value, na.rm=TRUE), "mean"= mean(Value, na.rm=TRUE)) |> 
+  summarise("min" = min(Population, na.rm=TRUE), "median" = median(Population, na.rm=TRUE), "max"= max(Population, na.rm=TRUE), "mean"= round(mean(Population, na.rm=TRUE),2)) |> 
   head(n=10) |> 
   knitr::kable(caption= "Statistics of young population per year")
 ```
@@ -295,7 +299,7 @@ This  total net enrolment rate table has `r enrolment |> ncol()` columns, which 
 enrolment |> 
   filter(Country != "Holy See") |> 
   group_by(Country) |> 
-  summarise("min" = min(Value, na.rm=TRUE), "median" = median(Value, na.rm=TRUE), "max"= max(Value, na.rm=TRUE), "mean"= mean(Value, na.rm=TRUE)) |> 
+  summarise("min" = round(min(Value, na.rm=TRUE),2), "median" = round(median(Value, na.rm=TRUE), 2), "max"= round(max(Value, na.rm=TRUE),2),  "mean"= round(mean(Value, na.rm=TRUE),2)) |> 
   head(n=10) |> 
   knitr::kable(caption= "Statistics of enrolment per year")
 ```
@@ -306,7 +310,7 @@ This Rural population table has `r rural |> ncol()` columns, which are `r rural 
 ```{r, warning= FALSE}
 rural |> 
   group_by(Country) |> 
-  summarise("min" = min(Value, na.rm=TRUE), "median" = median(Value, na.rm=TRUE), "max"= max(Value, na.rm=TRUE), "mean"= mean(Value, na.rm=TRUE)) |> 
+  summarise("min" = min(Value, na.rm=TRUE), "median" = median(Value, na.rm=TRUE), "max"= max(Value, na.rm=TRUE), "mean"= round(mean(Value, na.rm=TRUE),2)) |> 
   head(n=10) |> 
   knitr::kable(caption= "Statistics of rural population share per year")
 ```
@@ -318,18 +322,17 @@ This access to electricity table has `r electricity |> ncol()` columns, which ar
 electricity |> 
   group_by(Country) |> 
   filter(!(Country %in% c("Kosovo", "American Samoa", "Not classified"))) |>
-  summarise("min" = min(Value, na.rm=TRUE), "median" = median(Value, na.rm=TRUE), "max"= max(Value, na.rm=TRUE), "mean"= mean(Value, na.rm=TRUE)) |> 
+  summarise("min" = round(min(Value, na.rm=TRUE),2),  "median" = round(median(Value, na.rm=TRUE),2),  "max"= round(max(Value, na.rm=TRUE), 2), "mean"= round(mean(Value, na.rm=TRUE),2)) |> 
   head(n=10) |> 
   knitr::kable(caption= "Statistics of electricity access per year")
-
 ```
 
 The press freedom table shows for each country their rank and index. The index used ranges from 0 to 100 with 100 being a country with the best press freedom. This Index has been created by the Reporters Without Borders(RSF).
 
-This  press freedom table has `r PressFreedom |> ncol()` columns, which are `r PressFreedom |> names()`. It has `r PressFreedom |> nrow()` rows and each of them represents a particular country at a particular year. Here is a table with basic statistics of the  press freedom variable.  
+This  press freedom index table has `r PressFreedomIndex |> ncol()` columns, which are `r PressFreedomIndex |> names()`. It has `r PressFreedomIndex |> nrow()` rows and each of them represents a particular country at a particular year. Here is a table with basic statistics of the  press freedom variable.  
 ```{r}
-PressFreedom |> group_by(Country) |> 
-  summarise("min" = min(Value, na.rm=TRUE), "median" = median(Value, na.rm=TRUE), "max"= max(Value, na.rm=TRUE), "mean"= mean(Value, na.rm=TRUE)) |> 
+PressFreedomIndex |> group_by(Country) |> 
+  summarise("min" = round(min(`Press Freedom Index`, na.rm=TRUE), 2), "median" = round(median(`Press Freedom Index`, na.rm=TRUE), 2), "max"= round(max(`Press Freedom Index`, na.rm=TRUE), 2),  "mean"= round(mean(`Press Freedom Index`, na.rm=TRUE),2)) |> 
   head(n=10) |> 
   knitr::kable(caption= "Statistics of freedom of press per year")
 ```
@@ -341,7 +344,7 @@ The stability of institutions of each country is represented with the Bertelsman
 This stability of institutions table has `r institution |> ncol()` columns, which are `r institution |> names()`. It has `r institution|> nrow()` rows and each of them represents a particular country at a particular year. Here is a table with basic statistics of the stability of institutions variable. 
 ```{r}
 institution |> group_by(Country) |> 
-  summarise("min" = min(Value, na.rm=TRUE), "median" = median(Value, na.rm=TRUE), "max"= max(Value, na.rm=TRUE), "mean"= mean(Value, na.rm=TRUE)) |> 
+  summarise("min" = round(min(Value, na.rm=TRUE),2), "median" = round(median(Value, na.rm=TRUE),2), "max"= round(max(Value, na.rm=TRUE), 2), "mean"= round(mean(Value, na.rm=TRUE),2)) |> 
   head(n=10) |> 
   knitr::kable(caption= "Statistics of institution stability per year")
 ```
@@ -373,195 +376,9 @@ illiteracy |> filter(Country=="World") |> ggplot(aes(x= Time, y=Value/10^3)) + g
 illiteracy |> filter(Country %in%  c("Sub-Saharan Africa", "Central and Eastern Europe", "South-Eastern Asia", "Central Asia", "Northern Africa and Western Asia", "Eastern and South-Eastern Asia", "Oceania (excluding Australia and New Zealand")) |> ggplot(aes(x= Time, y=Value/10^3)) + geom_col() + ylab("Number of illiterate people per region") + ggtitle("Evolution of Illiteracy (in thousands) over time per region") + facet_wrap(~Country)
 ```
 
-Est-ce qu'il y a un effet de niveau ? Ou pas ?
-On met young_pop et illiteracy à la même unité.
-On met young_pop en number.
-
-```{r}
-young_pop <- young_pop |> mutate("Value"= Value * 10^3, "Indicator"= "Population aged 15-24 years (number)")
-```
-
-On met educ_expenditure et GDP à la même unité.
-On met GDP en millions $.
-
-```{r}
-GDP <- GDP |> mutate("Value"= Value / 10^6, "Indicator"= "GDP, US$ (millions)")
-```
-
-Donc on fait en pourcentage :
-
-```{r}
-rate <- function(data){
-  data_rate <- inner_join(data, young_pop, by = c("Country", "Time"))
-}
-```
-
-```{r}
-illiterate_rate <- inner_join(illiteracy, young_pop, by = c("Country", "Time")) 
-illiterate_rate <- illiterate_rate |> rename("Illiterate"="Value.x", "YoungPop"="Value.y")
-illiterate_rate <- illiterate_rate |> mutate("illiterate_rate"= Illiterate/YoungPop)
-```
-
-
-### Creation of Regions
-```{r}
-CentralAsia <- c("Armenia", "Azerbaijan", "Georgia", "Kazakhstan", "Kyrgyzstan", "Mongolia", "Tajikistan", "Turkmenistan", "Uzbekistan")
-
-
-
-NortAfricaAndWestAsia <- c("Algeria", "Egypt", "Libya", "Morocco", "Sudan",  "Tunisia", "Western Sahara", "Azerbaijan", "Armenia",  "Bahrain", "Cyprus", "Georgia", "Iraq", "Israel", "Jordan", "Kuwait", "Lebanon", "Oman", "Palestine",  "Qatar", "Saudi Arabia", "Syrian Arab Republic", "Turkey", "United Arab Emirates", "Yemen")
-
-
-
-SubSahara <- c("Angola", "Benin", "Botswana", "Burkina Faso", "Burundi", "Cabo Verde", "Cameroon", "Central African Republic", "Chad", "Comoros", "Congo, Democratic Republic of", "Congo, Republic of", "Cote d'Ivoire", "Equatorial Guinea", "Eritrea", "Eswatini", "Ethiopia", "Gabon", "Gambia, The", "Ghana", "Guinea", "Guinea-Bissau", "Kenya", "Lesotho", "Liberia", "Madagascar", "Malawi", "Mali", "Mauritania", "Mauritius", "Mozambique", "Namibia", "Niger", "Nigeria", "Rwanda", "Sao Tome and Principe", "Senegal", "Seychelles", "Sierra Leone", "Somalia", "South Africa", "South Sudan", "Sudan", "Tanzania", "Togo", "Uganda", "Zambia", "Zimbabwe")
-
-
-CentralAndEasternEurope <- c("Albania", "Belarus", "Bosnia and Herzegovina", "Bulgaria", "Croatia", "Czech Republic", "Estonia", "Hungary", "Kosovo", "Latvia", "Lithuania", "Moldova", "Montenegro", "North Macedonia", "Poland", "Romania", "Serbia", "Slovakia", "Slovenia", "Ukraine")
-
-
-EastAndSoutheastAsia <- c("Brunei", "Cambodia", "China", "Indonesia", "Japan", "Laos", "Malaysia", "Myanmar", "Philippines", "Singapore", "South Korea", "Thailand", "Timor-Leste", "Vietnam")
-
-
-SoutheastAsia <- c("Brunei", "Cambodia", "Indonesia", "Laos", "Malaysia", "Myanmar", "Philippines", "Singapore", "Thailand", "Timor-Leste", "Vietnam")
-```
-
-
-### Young Pop regions
-```{r}
-young_pop_CentralAsia <-
-  young_pop |>
-  filter(Country %in% CentralAsia) |>
-  group_by(Time) |>
-  summarise(total_value = sum(Value, na.rm = TRUE))
-young_pop_CentralAsia <- young_pop_CentralAsia |> mutate("Region"= "Central Asia")
-```
-
-```{r}
-young_pop_NorthAfricaAndWestAsia <-
-  young_pop |>
-  filter(Country %in% NortAfricaAndWestAsia) |>
-  group_by(Time) |>
-  summarise(total_value = sum(Value, na.rm = TRUE))
-young_pop_NorthAfricaAndWestAsia <-young_pop_NorthAfricaAndWestAsia |> mutate("Region"= "North Africa And West Asia")
-```
-
-```{r}
-young_pop_SubSahara <-
-  young_pop |>
-  filter(Country %in% SubSahara) |>
-  group_by(Time) |>
-  summarise(total_value = sum(Value, na.rm = TRUE))
-young_pop_SubSahara <- young_pop_SubSahara |> mutate("Region"="SubSahara")
-```
-
-```{r}
-young_pop_CentralAndEasternEurope <-
-  young_pop |>
-  filter(Country %in% CentralAndEasternEurope) |>
-  group_by(Time) |>
-  summarise(total_value = sum(Value, na.rm = TRUE))
-young_pop_CentralAndEasternEurope <- young_pop_CentralAndEasternEurope |> mutate("Region"= "Central And Eastern Europe")
-```
-
-```{r}
-young_pop_EastAndSouthEastAsia <-
-  young_pop |>
-  filter(Country %in% EastAndSoutheastAsia) |>
-  group_by(Time) |>
-  summarise(total_value = sum(Value, na.rm = TRUE))
-young_pop_EastAndSouthEastAsia <- young_pop_EastAndSouthEastAsia |> mutate("Region"= "East And South East Asia")
-```
-
-```{r}
-young_pop_SouthEastAsia <-
-  young_pop |>
-  filter(Country %in% SoutheastAsia) |>
-  group_by(Time) |>
-  summarise(total_value = sum(Value, na.rm = TRUE))
-young_pop_SouthEastAsia <- young_pop_SouthEastAsia |> mutate("Region"= "South East Asia")
-```
-
-
-### Illiterate per region
-```{r}
-illiteracy_CentralAsia <-
-  illiteracy |>
-  filter(Country %in% CentralAsia) |>
-  group_by(Time) |>
-  summarise(total_value = sum(Value, na.rm = TRUE))
-illiteracy_CentralAsia <- illiteracy_CentralAsia |> mutate("Region"= "Central Asia")
-```
-
-```{r}
-illiteracy_NorthAfricaAndWestAsia <-
-  illiteracy |>
-  filter(Country %in% NortAfricaAndWestAsia) |>
-  group_by(Time) |>
-  summarise(total_value = sum(Value, na.rm = TRUE))
-illiteracy_NorthAfricaAndWestAsia <- illiteracy_NorthAfricaAndWestAsia |> mutate("Region"= "North Africa And West Asia")
-```
-
-```{r}
-illiteracy_SubSahara <-
-  illiteracy |>
-  filter(Country %in% SubSahara) |>
-  group_by(Time) |>
-  summarise(total_value = sum(Value, na.rm = TRUE))
-illiteracy_SubSahara <- illiteracy_SubSahara |> mutate("Region"= "SubSahara")
-```
-
-```{r}
-illiteracy_CentralAndEasternEurope <-
-  illiteracy |>
-  filter(Country %in% CentralAndEasternEurope) |>
-  group_by(Time) |>
-  summarise(total_value = sum(Value, na.rm = TRUE))
-illiteracy_CentralAndEasternEurope <- illiteracy_CentralAndEasternEurope |> mutate("Region"= "Central And Eastern Europe")
-```
-
-```{r}
-illiteracy_EastAndSouthEastAsia <-
-  illiteracy |>
-  filter(Country %in% EastAndSoutheastAsia) |>
-  group_by(Time) |>
-  summarise(total_value = sum(Value, na.rm = TRUE))
-illiteracy_EastAndSouthEastAsia <- illiteracy_EastAndSouthEastAsia |> mutate("Region"= "East And South East Asia")
-```
-
-```{r}
-illiteracy_SouthEastAsia <-
-  illiteracy |>
-  filter(Country %in% SoutheastAsia) |>
-  group_by(Time) |>
-  summarise(total_value = sum(Value, na.rm = TRUE))
-illiteracy_SouthEastAsia <- illiteracy_SouthEastAsia |> mutate("Region"= "South East Asia")
-```
-
-
-### Concatenation of Regions for Young Population Datasets
-```{r}
-young_pop_regions <- rbind(young_pop_CentralAsia, young_pop_NorthAfricaAndWestAsia)
-young_pop_regions <- rbind(young_pop_regions, young_pop_SubSahara)
-young_pop_regions <- rbind(young_pop_regions, young_pop_CentralAndEasternEurope)
-young_pop_regions <- rbind(young_pop_regions, young_pop_EastAndSouthEastAsia)
-young_pop_regions <- rbind(young_pop_regions, young_pop_SouthEastAsia)
-```
-
-
-### Concatenation of Regions for Illiterate Datasets
-```{r}
-illiteracy_regions <- rbind(illiteracy_CentralAsia, illiteracy_NorthAfricaAndWestAsia)
-illiteracy_regions <- rbind(illiteracy_regions, illiteracy_SubSahara)
-illiteracy_regions <- rbind(illiteracy_regions, illiteracy_CentralAndEasternEurope)
-illiteracy_regions <- rbind(illiteracy_regions, illiteracy_EastAndSouthEastAsia)
-illiteracy_regions <- rbind(illiteracy_regions, illiteracy_SouthEastAsia)
-```
-
-
 ### Join of both datasets
 ```{r}
-graph1_data <- inner_join(illiteracy_regions, young_pop_regions, by = c("Region", "Time")) 
-graph1_data |> mutate("rate"= total_value.x/total_value.y) |> ggplot(aes(x= Time, y=rate)) + geom_col() + ylab("Number of illiterate people per region") + ggtitle("Distribution of Illiteracy (rate) over time") + facet_wrap(~Region)
+inner_join(illiteracy_regions, young_pop_regions, by = c("Region", "Time")) |> mutate("rate"= total_value.x/total_value.y) |> ggplot(aes(x= Time, y=rate)) + geom_col() + ylab("Number of illiterate people per region") + ggtitle("Distribution of Illiteracy (rate) over time") + facet_wrap(~Region)
 ```
 
 Donc c'est pas tellement un effet de taille, mais on a un problème parce que la taille de notre dernier dataset est très petit
@@ -596,100 +413,62 @@ ggplot() +
 ```
 
 
-## Creation groupe
-```{r}
-illiterate_rate <- illiterate_rate |> group_by(Time) |> 
-  mutate(GROUP = case_when(
-      illiterate_rate <= quantile(illiterate_rate, 0.3, na.rm = TRUE) ~ 1,
-      quantile(illiterate_rate, 0.3, na.rm = TRUE) < illiterate_rate & illiterate_rate <= quantile(illiterate_rate, 0.70, na.rm = TRUE) ~ 2,
-      quantile(illiterate_rate, 0.70, na.rm = TRUE) < illiterate_rate ~ 3,
-      TRUE ~ NA ))
-```
 
-### Expenditure in rate
-```{r}
-expenditure_rate <- inner_join(educ_expenditure, GDP, by = c("Country", "Time")) 
-expenditure_rate <- expenditure_rate |> mutate("exp_rate"= Value.x/Value.y)
-```
 
-Let's look at its distribution :
+
+
+On joint illiteracy et expenditure
 
 ```{r}
-expenditure_rate |> 
-  group_by(Time) |>
-  summarise(
-    min = min(exp_rate, na.rm = TRUE),
-    q1 = quantile(exp_rate, 0.25, na.rm = TRUE),
-    median = median(exp_rate, na.rm = TRUE),
-    q3 = quantile(exp_rate, 0.75, na.rm = TRUE),
-    max = max(exp_rate, na.rm = TRUE)
-  ) |>
-  knitr::kable(caption = "Statistics of expenditure rate per year")
-```
-
-peut-être représenter ça ? 
-On essaie de former 4
-
-```{r}
-expenditure_rate <- expenditure_rate |> 
-  group_by(Time) |> 
-  mutate(group = case_when(
-      exp_rate <= quantile(exp_rate, 0.25, na.rm = TRUE) ~ 1,
-      quantile(exp_rate, 0.25, na.rm = TRUE) < exp_rate & exp_rate <= median(exp_rate, na.rm = TRUE) ~ 2,
-      median(exp_rate, na.rm = TRUE) < exp_rate & exp_rate <= quantile(exp_rate, 0.75, na.rm = TRUE) ~ 3,
-      quantile(exp_rate, 0.75, na.rm = TRUE) < exp_rate ~ 4,
-      TRUE ~ NA ))
-```
-
-
-### Graphical Representation
-
-On join illiteracy et expenditure
-
-```{r}
-expenditure_rate <- expenditure_rate |> select(Country, Time, Indicator.x, group, exp_rate)
-illiteracy <- illiteracy |> rename("Illiteracy"= "Value")
+expenditure_rate <- expenditure_rate |> select(Country, Time, -Indicator.x, exp_rate)
 young_pop <- young_pop |> rename("Population"= "Value")
-
-data_inter <- inner_join(illiteracy, expenditure_rate, by = c("Country", "Time"))
-data_inter <- inner_join(data_inter, young_pop, by = c("Country", "Time"))
-
 ```
 
+
+
 ```{r}
-data_inter |>
-  group_by(Time, group) |>
-  summarise(total_illiteracy = sum(Illiteracy, na.rm = TRUE), total_young_pop = sum(Population, na.rm = TRUE)) |> mutate("illiterate rate" = total_illiteracy/total_young_pop ) |> ggplot(aes(x=Time,y=`illiterate rate` )) + geom_col() + ylab("Illiterate rate per group of education expenditure") + ggtitle("Distribution of Illiteracy rate over time per group") + facet_wrap(~group)
+data_inter |> filter(GROUP != 2) |> ggplot(aes(fill=as.factor(GROUP), y=exp_rate, x=as.factor(Time))) + geom_boxplot(position="dodge", alpha=0.5) + coord_flip()+ guides(fill = guide_legend(title = "Group")) + labs(title = "Boxplot of Expenditure on Education Rate Over Time per group",x = "Time", y = "Expenditure on Education Rate") 
 ```
 
 
 ### Link between enrollment and educ_expenditure rate
 
-On doit faire un test statistique
-
-```{r}
-expenditure_rate <- expenditure_rate |> 
-  group_by(Time) |> 
-  mutate(GROUP = case_when(
-      exp_rate <= quantile(exp_rate, 0.10, na.rm = TRUE) ~ 1,
-      quantile(exp_rate, 0.10, na.rm = TRUE) < exp_rate & exp_rate <= quantile(exp_rate, 0.90, na.rm = TRUE) ~ 2,
-      quantile(exp_rate, 0.90, na.rm = TRUE) < exp_rate ~ 3,
-      TRUE ~ NA ))
-```
+FAIRE PAR GROUPE !!!!!!!! PUIS BOUGER
 
 ```{r}
 enrol_exp <- inner_join(enrolment, expenditure_rate, by=c("Country", "Time")) |> mutate("Value"= Value/100) |> rename("enrolment"= "Value")
 ```
 
 ```{r}
-enrol_exp|> filter(GROUP!=2) |> ggplot(aes(y = enrolment, fill = Country)) +     geom_boxplot() + facet_wrap(~GROUP) + theme(legend.position = "bottom")
+lm(enrolment ~ exp_rate + as.factor(Time), data = enrol_exp) |> summary()
 ```
-
-Faire en sorte que la légende soit par groupe. 
-On voit que pour le top 10%  enrolment est très élevé alors qu'il est plus et pour le bas 10% déjà est bcp plus hétérogène et plus bas de manière générale. 
-+ Mettre un tableau avec le nb d'observation pour mettre en perspective. 
+Interprétation
 
 ### Lien entre enrolment et Illiteracy
+
+
+```{r}
+illiteracy_enrol <- inner_join(illiterate_rate, enrolment, by=c("Time", "Country"))
+```
+
+
+```{r}
+library(scatterplot3d)
+library(RColorBrewer)
+library(plot3D)
+
+color_palette <- brewer.pal(5, "Set3")
+
+scatterplot3d(x = illiteracy_enrol$Time, y = illiteracy_enrol$illiterate_rate, z = illiteracy_enrol$Value, 
+              color = color_palette[as.numeric(illiteracy_enrol$GROUP)], pch = 16, angle = 130,
+              xlab = "Time", ylab = "Illiterate rate ", zlab = "Enrolement ",
+              main = "3D Scatter Plot with Time, Illiterate rate, and Enrolement")
+
+```
+
+
+
+
 
 FAIRE UN TEST STATISTIQUE pou r une année
 
@@ -703,4 +482,11 @@ summary(model)
 inner_join(illiterate_rate, enrolment, by=c("Country", "Time")) |> mutate("illiterate_per"= illiterate_rate * 100) |> select(-Illiterate, -illiterate_rate, -starts_with("Indicator"), -starts_with("LOCATION")) |>  filter(Time == 2021) |> ggplot(aes(x = Value, y= illiterate_per)) + geom_point() +
     geom_smooth(method = "lm")
 ```
+
+##Illiteracy vs life-expectancy vs rural
+
+```{r}
+
+```
+
 
