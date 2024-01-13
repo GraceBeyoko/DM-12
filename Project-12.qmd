@@ -473,13 +473,18 @@ inner_join(illiterate_rate, electricity, by = c("Time", "Country")) |>  inner_jo
 ggplot(aes(x = `GDP per capita`, y = illiterate_rate,size =rural_per, color = electricity_per)) +
 geom_point(alpha = .3) + scale_color_gradient(low = "green", high = "red") + theme_minimal(base_size = 14) + facet_wrap(~GROUP)
 ```
+```{r}
+data2 <- inner_join(illiterate_rate, electricity, by = c("Time", "Country")) |>  inner_join(rural, by = c("Time", "Country")) 
+
+quantile1 <- quantile(data2$illiterate_rate, 0.3, na.rm=T)
+quantile2 <- quantile(data2$illiterate_rate, 0.7, na.rm=T)
+
+data2 |> select(rural_per, illiterate_rate, electricity_per, Time) |> na.omit() |> ggplot(aes(x = rural_per, y = illiterate_rate, color = electricity_per)) +  geom_point(alpha=.5) + scale_color_gradient(low = "green", high = "red") + geom_hline(yintercept = quantile1, linetype = "dashed", color = "black") + geom_hline(yintercept = quantile2, linetype = "dashed", color = "black") + labs(title = "Relation between rural, illiterate and electricity share", x = "Rural percentage", y = "Illiterate percentage")
+```
 
 ## illiteracy vs PressFreedom vs Institutions (Mosaic Plot)
 
 ```{r}
-library(vcd)
-library(vcdExtra)
-
 PressFreedomIndex <- PressFreedomIndex |>
   group_by(Time) |>
   mutate(GROUP_press = case_when(
@@ -502,4 +507,8 @@ inner_join(illiterate_rate,PressFreedomIndex, by = c("Time", "Country")) |> inne
 ```
 
 
+```{r}
+library(ggmosaic)
+library(htmltools)
 
+```

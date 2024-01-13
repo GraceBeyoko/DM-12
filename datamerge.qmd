@@ -248,4 +248,7 @@ illiterate_rate <- illiterate_rate |> group_by(Time) |>
 data_inter <- inner_join(illiterate_rate, expenditure_rate, by = c("Country", "Time"))
 data_inter <- inner_join(data_inter, young_pop, by = c("Country", "Time"))
 ```
+```{r}
+illiteracy_enrol <- inner_join(illiterate_rate, enrolment, by=c("Country", "Time"))
+```
 
