@@ -3,239 +3,15 @@ title: "datasets merging"
 format: html
 ---
 
-```{r, message=FALSE, warning=FALSE}
-here::i_am("DM-12.Rproj")
-library(here)
-library(vroom)
-library(dplyr)
-library(tidyr)
-library(ggplot2)
-library(knitr)
-library(patchwork)
-library(stringr)
-```
-
-In this document we will merge, when needed, datasets with variables of interest.
-
-## Data loading 
-```{r, warning=FALSE, message=FALSE}
-educ_expenditure <- vroom(here("data", "Expenditure on education.csv"), 
-                          locale=locale(decimal_mark = "."))
-GDP_capita <- vroom(here("data", "GDP per capita.csv"), 
-                    locale=locale(decimal_mark = "."))
-life_expectancy <- vroom(here("data", "life_expectancy.csv"), 
-                         locale=locale(decimal_mark = "."))
-PressFreedom <- vroom(here("data", "PressFreedom.csv"), 
-                      locale=locale(decimal_mark = "."))
-GDP <- vroom(here("data", "GDP.csv"), 
-             locale=locale(decimal_mark = "."))
-enrolment  <- vroom(here("data", "enrolment.csv"), 
-                    locale=locale(decimal_mark = "."))
-illiteracy <- vroom(here("data", "illiteracy.csv"), 
-                    locale=locale(decimal_mark = "."))
-electricity <- vroom(here("data", "Electricity.csv"), 
-                     locale=locale(decimal_mark = "."), 
-                     na="..")
-institution <- vroom(here("data", "stability-democratic-institutions-index.csv"), 
-                     locale=locale(decimal_mark = "."))
-rural <- vroom("data/Rural.csv", col_types=cols(
-   DEMO_IND = col_character(),
-   Indicator = col_character(),
-   LOCATION = col_character(),
-   Country = col_character(),
-   TIME = col_double(),
-   Time = col_double(),
-   Value = col_double(),
-   `Flag Codes` = col_character(),
-   Flags = col_character(),
-   .delim = ","))
-young_pop <- vroom(here("data", "young_population.csv"), 
-                     locale=locale(decimal_mark = "."))
-```
-
-```{r}
-illiterate_rate <- inner_join(illiteracy, young_pop, by = c("Country", "Time")) 
-illiterate_rate <- illiterate_rate |> rename("Illiterate"="Value.x", "YoungPop"="Value.y")
-illiterate_rate <- illiterate_rate |> mutate("illiterate_rate"= Illiterate/YoungPop)
-```
-
-
-### Creation of Regions
-```{r}
-CentralAsia <- c("Armenia", "Azerbaijan", "Georgia", "Kazakhstan", "Kyrgyzstan", "Mongolia", "Tajikistan", "Turkmenistan", "Uzbekistan")
-
-
-
-NortAfricaAndWestAsia <- c("Algeria", "Egypt", "Libya", "Morocco", "Sudan",  "Tunisia", "Western Sahara", "Azerbaijan", "Armenia",  "Bahrain", "Cyprus", "Georgia", "Iraq", "Israel", "Jordan", "Kuwait", "Lebanon", "Oman", "Palestine",  "Qatar", "Saudi Arabia", "Syrian Arab Republic", "Turkey", "United Arab Emirates", "Yemen")
-
-
-
-SubSahara <- c("Angola", "Benin", "Botswana", "Burkina Faso", "Burundi", "Cabo Verde", "Cameroon", "Central African Republic", "Chad", "Comoros", "Congo, Democratic Republic of", "Congo, Republic of", "Cote d'Ivoire", "Equatorial Guinea", "Eritrea", "Eswatini", "Ethiopia", "Gabon", "Gambia, The", "Ghana", "Guinea", "Guinea-Bissau", "Kenya", "Lesotho", "Liberia", "Madagascar", "Malawi", "Mali", "Mauritania", "Mauritius", "Mozambique", "Namibia", "Niger", "Nigeria", "Rwanda", "Sao Tome and Principe", "Senegal", "Seychelles", "Sierra Leone", "Somalia", "South Africa", "South Sudan", "Sudan", "Tanzania", "Togo", "Uganda", "Zambia", "Zimbabwe")
-
-
-CentralAndEasternEurope <- c("Albania", "Belarus", "Bosnia and Herzegovina", "Bulgaria", "Croatia", "Czech Republic", "Estonia", "Hungary", "Kosovo", "Latvia", "Lithuania", "Moldova", "Montenegro", "North Macedonia", "Poland", "Romania", "Serbia", "Slovakia", "Slovenia", "Ukraine")
-
-
-EastAndSoutheastAsia <- c("Brunei", "Cambodia", "China", "Indonesia", "Japan", "Laos", "Malaysia", "Myanmar", "Philippines", "Singapore", "South Korea", "Thailand", "Timor-Leste", "Vietnam")
-
-
-SoutheastAsia <- c("Brunei", "Cambodia", "Indonesia", "Laos", "Malaysia", "Myanmar", "Philippines", "Singapore", "Thailand", "Timor-Leste", "Vietnam")
-```
-
-
-### Young Pop regions
-```{r}
-young_pop_CentralAsia <-
-  young_pop |>
-  filter(Country %in% CentralAsia) |>
-  group_by(Time) |>
-  summarise(total_value = sum(Value, na.rm = TRUE))
-young_pop_CentralAsia <- young_pop_CentralAsia |> mutate("Region"= "Central Asia")
-```
-
-```{r}
-young_pop_NorthAfricaAndWestAsia <-
-  young_pop |>
-  filter(Country %in% NortAfricaAndWestAsia) |>
-  group_by(Time) |>
-  summarise(total_value = sum(Value, na.rm = TRUE))
-young_pop_NorthAfricaAndWestAsia <-young_pop_NorthAfricaAndWestAsia |> mutate("Region"= "North Africa And West Asia")
-```
-
-```{r}
-young_pop_SubSahara <-
-  young_pop |>
-  filter(Country %in% SubSahara) |>
-  group_by(Time) |>
-  summarise(total_value = sum(Value, na.rm = TRUE))
-young_pop_SubSahara <- young_pop_SubSahara |> mutate("Region"="SubSahara")
-```
-
-```{r}
-young_pop_CentralAndEasternEurope <-
-  young_pop |>
-  filter(Country %in% CentralAndEasternEurope) |>
-  group_by(Time) |>
-  summarise(total_value = sum(Value, na.rm = TRUE))
-young_pop_CentralAndEasternEurope <- young_pop_CentralAndEasternEurope |> mutate("Region"= "Central And Eastern Europe")
-```
-
-```{r}
-young_pop_EastAndSouthEastAsia <-
-  young_pop |>
-  filter(Country %in% EastAndSoutheastAsia) |>
-  group_by(Time) |>
-  summarise(total_value = sum(Value, na.rm = TRUE))
-young_pop_EastAndSouthEastAsia <- young_pop_EastAndSouthEastAsia |> mutate("Region"= "East And South East Asia")
-```
-
-```{r}
-young_pop_SouthEastAsia <-
-  young_pop |>
-  filter(Country %in% SoutheastAsia) |>
-  group_by(Time) |>
-  summarise(total_value = sum(Value, na.rm = TRUE))
-young_pop_SouthEastAsia <- young_pop_SouthEastAsia |> mutate("Region"= "South East Asia")
-```
-
-### Illiterate per region
-```{r}
-illiteracy_CentralAsia <-
-  illiteracy |>
-  filter(Country %in% CentralAsia) |>
-  group_by(Time) |>
-  summarise(total_value = sum(Value, na.rm = TRUE))
-illiteracy_CentralAsia <- illiteracy_CentralAsia |> mutate("Region"= "Central Asia")
-```
-
-```{r}
-illiteracy_NorthAfricaAndWestAsia <-
-  illiteracy |>
-  filter(Country %in% NortAfricaAndWestAsia) |>
-  group_by(Time) |>
-  summarise(total_value = sum(Value, na.rm = TRUE))
-illiteracy_NorthAfricaAndWestAsia <- illiteracy_NorthAfricaAndWestAsia |> mutate("Region"= "North Africa And West Asia")
-```
-
-```{r}
-illiteracy_SubSahara <-
-  illiteracy |>
-  filter(Country %in% SubSahara) |>
-  group_by(Time) |>
-  summarise(total_value = sum(Value, na.rm = TRUE))
-illiteracy_SubSahara <- illiteracy_SubSahara |> mutate("Region"= "SubSahara")
-```
-
-```{r}
-illiteracy_CentralAndEasternEurope <-
-  illiteracy |>
-  filter(Country %in% CentralAndEasternEurope) |>
-  group_by(Time) |>
-  summarise(total_value = sum(Value, na.rm = TRUE))
-illiteracy_CentralAndEasternEurope <- illiteracy_CentralAndEasternEurope |> mutate("Region"= "Central And Eastern Europe")
-```
-
-```{r}
-illiteracy_EastAndSouthEastAsia <-
-  illiteracy |>
-  filter(Country %in% EastAndSoutheastAsia) |>
-  group_by(Time) |>
-  summarise(total_value = sum(Value, na.rm = TRUE))
-illiteracy_EastAndSouthEastAsia <- illiteracy_EastAndSouthEastAsia |> mutate("Region"= "East And South East Asia")
-```
-
-```{r}
-illiteracy_SouthEastAsia <-
-  illiteracy |>
-  filter(Country %in% SoutheastAsia) |>
-  group_by(Time) |>
-  summarise(total_value = sum(Value, na.rm = TRUE))
-illiteracy_SouthEastAsia <- illiteracy_SouthEastAsia |> mutate("Region"= "South East Asia")
-```
-
-### Concatenation of Regions for Young Population Datasets
-```{r}
-young_pop_regions <- rbind(young_pop_CentralAsia, young_pop_NorthAfricaAndWestAsia)
-young_pop_regions <- rbind(young_pop_regions, young_pop_SubSahara)
-young_pop_regions <- rbind(young_pop_regions, young_pop_CentralAndEasternEurope)
-young_pop_regions <- rbind(young_pop_regions, young_pop_EastAndSouthEastAsia)
-young_pop_regions <- rbind(young_pop_regions, young_pop_SouthEastAsia)
-```
-
-
-### Concatenation of Regions for Illiterate Datasets
-```{r}
-illiteracy_regions <- rbind(illiteracy_CentralAsia, illiteracy_NorthAfricaAndWestAsia)
-illiteracy_regions <- rbind(illiteracy_regions, illiteracy_SubSahara)
-illiteracy_regions <- rbind(illiteracy_regions, illiteracy_CentralAndEasternEurope)
-illiteracy_regions <- rbind(illiteracy_regions, illiteracy_EastAndSouthEastAsia)
-illiteracy_regions <- rbind(illiteracy_regions, illiteracy_SouthEastAsia)
-```
-
-Est-ce qu'il y a un effet de niveau ? Ou pas ?
-On met young_pop et illiteracy à la même unité.
-On met young_pop en number.
-
-
-On met educ_expenditure et GDP à la même unité.
-On met GDP en millions $.
-Donc on fait en pourcentage :
+## Creation illiterate rate 
 
 ```{r}
 young_pop <- young_pop |> mutate("Value"= Value * 10^3, "Indicator"= "Population aged 15-24 years (number)")
 illiterate_rate <- inner_join(illiteracy, young_pop, by = c("Country", "Time")) 
 illiterate_rate <- illiterate_rate |> rename("Illiterate"="Value.x", "YoungPop"="Value.y")
-illiterate_rate <- illiterate_rate |> mutate("illiterate_rate"= (Illiterate/YoungPop)*100)
-```
-```{r}
-GDP <- GDP |> mutate("Value"= Value / 10^6, "Indicator"= "GDP, US$ (millions)")
+illiterate_rate <- illiterate_rate |> mutate("illiterate_rate"= (Illiterate/YoungPop)*100) |> filter(!is.na(illiterate_rate))
 
-expenditure_rate <- inner_join(educ_expenditure, GDP, by = c("Country", "Time")) 
-expenditure_rate <- expenditure_rate |> mutate("exp_rate"= Value.x/Value.y)
-```
-## Creation groupe
-
-```{r}
+## Creation de groupe
 illiterate_rate <- illiterate_rate |> group_by(Time) |> 
   mutate(GROUP = case_when(
       illiterate_rate <= quantile(illiterate_rate, 0.3, na.rm = TRUE) ~ 1,
@@ -244,10 +20,21 @@ illiterate_rate <- illiterate_rate |> group_by(Time) |>
       TRUE ~ NA ))
 ```
 
+
+## Creation expenditure rate 
+```{r}
+GDP <- GDP |> mutate("Value"= Value / 10^6, "Indicator"= "GDP, US$ (millions)")
+
+expenditure_rate <- inner_join(educ_expenditure, GDP, by = c("Country", "Time")) 
+expenditure_rate <- expenditure_rate |> mutate("exp_rate"= Value.x/Value.y) 
+```
+
+
 ```{r}
 data_inter <- inner_join(illiterate_rate, expenditure_rate, by = c("Country", "Time"))
 data_inter <- inner_join(data_inter, young_pop, by = c("Country", "Time"))
 ```
+
 ```{r}
 illiteracy_enrol <- inner_join(illiterate_rate, enrolment, by=c("Country", "Time"))
 ```
