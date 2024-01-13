@@ -453,30 +453,48 @@ enrol_exp <- inner_join(enrolment, expenditure_rate, by=c("Country", "Time")) |>
 ```{r}
 lm(enrolment ~ exp_rate + as.factor(Time), data = enrol_exp) |> summary()
 ```
-
+## illiteracy vs. enrolment
 ```{r}
 illiteracy_enrol <- inner_join(illiterate_rate, enrolment, by=c("Time", "Country"))
 ```
-
-
 ```{r}
 library(scatterplot3d)
 library(RColorBrewer)
+color_palette <- c("#999999", "#E69F00", "#56B4E9")
+
+s3d <- scatterplot3d(x = illiteracy_enrol$Time, y = illiteracy_enrol$illiterate_rate, z = illiteracy_enrol$Value, 
+              color = color_palette[as.numeric(illiteracy_enrol$GROUP)], pch = 16, angle = 130,
+              xlab = "Time", ylab = "Illiterate rate", zlab = "Enrollment",
+              main = "3D Scatter Plot with Time, Illiterate rate, and Enrollment")
+
+legend(c(7, 12, 30), legend = levels(illiteracy_enrol$GROUP),
+       col = c("#999999", "#E69F00", "#56B4E9"), pch = 16, title = "GROUP")
+```
+```{r}
+scatterplot3d(x = illiteracy_enrol$Time, y = illiteracy_enrol$illiterate_rate, z = illiteracy_enrol$Value, color = color_palette[as.factor(illiteracy_enrol$GROUP)], pch = 16, angle = 130, xlab = "Time", ylab = "Illiteracy rate", zlab = "Value", main = "3D Scatter Plot with Time, Illiteracy rate, and Value")
+
+legend("topright", legend = levels(illiteracy_enrol$GROUP), col = color_palette, pch = 16, title = "GROUP")
+```
+```{r}
 color_palette <- brewer.pal(5, "Set3")
 
 scatterplot3d(x = illiteracy_enrol$Time, y = illiteracy_enrol$illiterate_rate, z = illiteracy_enrol$Value, 
               color = color_palette[as.numeric(illiteracy_enrol$GROUP)], pch = 16, angle = 130,
               xlab = "Time", ylab = "Illiterate rate ", zlab = "Enrolement ",
               main = "3D Scatter Plot with Time, Illiterate rate, and Enrolement")
+legend("topright", legend = levels(illiteracy_enrol$GROUP), col = color_palette, pch = 16, title = "GROUP")
 ```
 
-### Lien entre illiteracy vs. electricity vs. Rural
+```{r}
+illiteracy_enrol |> filter(Time!=2021, !is.na(GROUP)) |> ggplot(aes(x = Value, y = illiterate_rate, label = Country)) + geom_point(alpha = .6) + facet_wrap(~GROUP) + xlab("enrolment percentage") + ylab("illiterate percentage") + ggtitle("impact of enrolment on illiteracy per group")
+```
+
+## illiteracy vs electricity vs rural
 ```{r}
 rural <- rural |> rename("rural_per"="Value")
 electricity <- electricity |> rename("electricity_per"="Value")
 GDP_capita <- GDP_capita |> rename("GDP per capita"="Value")
 ```
-
 ```{r}
 inner_join(illiterate_rate, electricity, by = c("Time", "Country")) |>  inner_join(rural, by = c("Time", "Country")) |> inner_join(GDP_capita, by = c("Time", "Country")) |> filter(Time == 2021) |> 
 ggplot(aes(x = `GDP per capita`, y = illiterate_rate,size =rural_per, color = electricity_per)) +
