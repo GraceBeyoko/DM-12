@@ -235,6 +235,7 @@ PressFreedomIndex <- PressFreedomIndex |>
 
 Since our analysis is not at the individual level, we are going to only select "Both Sexes" values. Then, we will remove the columns we deem unnecessary and rename the remaining columns. 
 
+## Renaming
 
 To finish, we now are cleaning the Institution variable, which only consists of renaming its columns. 
 ```{r, echo=FALSE}
@@ -383,9 +384,31 @@ First, we want to have a look at the distribution over time of Illiterate demogr
 illiteracy |> filter(Country=="World") |> ggplot(aes(x= Time, y=Value/10^3)) + geom_line() + ylab("Number of illiterates (in thousands)") + ggtitle("Evolution of Illiteracy over the years")
 ```
 
-## Size effect ?
+
 ```{r, echo=FALSE}
 illiteracy |> filter(Country %in%  c("Sub-Saharan Africa", "Central and Eastern Europe", "South-Eastern Asia", "Central Asia", "Northern Africa and Western Asia", "Eastern and South-Eastern Asia", "Oceania (excluding Australia and New Zealand")) |> ggplot(aes(x= Time, y=Value/10^3)) + geom_col() + ylab("Number of illiterate people (in thousands)") + ggtitle("Evolution of Illiteracy over time per region") + facet_wrap(~Country)
+```
+## Size effect ?
+```{r, echo=FALSE}
+## Creation illiterate rate 
+
+illiterate_rate <- inner_join(illiteracy, young_pop, by = c("Country", "Time")) |> rename("YoungPop"= "Value.y", "Illiterate"="Value.x")
+illiterate_rate <- illiterate_rate |> mutate("illiterate_rate"= (Illiterate/YoungPop)*100) |> filter(!is.na(illiterate_rate))
+```
+
+```{r, echo=FALSE}
+## Creation groupe
+
+illiterate_rate <- illiterate_rate |> group_by(Time) |> 
+  mutate(GROUP = case_when(
+      illiterate_rate <= quantile(illiterate_rate, 0.3, na.rm = TRUE) ~ 1,
+      quantile(illiterate_rate, 0.3, na.rm = TRUE) < illiterate_rate & illiterate_rate <= quantile(illiterate_rate, 0.70, na.rm = TRUE) ~ 2,
+      quantile(illiterate_rate, 0.70, na.rm = TRUE) < illiterate_rate ~ 3,
+      TRUE ~ NA ))
+```
+
+```{r, echo=FALSE, warning=FALSE}
+illiterate_rate |> group_by(Time) |> summarise("total_young_pop"= sum(YoungPop), "total_illiterate"=sum(Illiterate)) |> mutate("total_rate"=total_illiterate/total_young_pop) |> ggplot(aes(x=Time, y=total_rate)) + ylab("Percentage of illiterates") + geom_line() + ggtitle("Evolution of Illiteracy over the years")
 ```
 
 
@@ -546,20 +569,10 @@ young_pop_regions <- young_pop_regions |> rename("young_pop"= "total_value")
 ```{r, echo=FALSE}
 ### Join of both datasets
 
-inner_join(illiteracy_regions, young_pop_regions, by=c("Region", "Time")) |> mutate("illiterate_rate_regions"= 100*(illiteracy/young_pop)) |> select(Time, Region, illiterate_rate_regions) |> ggplot(aes(x= Time, y=illiterate_rate_regions)) + geom_col() + ylab("Illiteracy rate") + ggtitle("Evolution of Illiteracy over time") + facet_wrap(~Region)
+inner_join(illiteracy_regions, young_pop_regions, by=c("Region", "Time")) |> mutate("illiterate_rate_regions"= 100*(illiteracy/young_pop)) |> select(Time, Region, illiterate_rate_regions) |> ggplot(aes(x= Time, y=illiterate_rate_regions)) + geom_col() + ylab("Illiteracy percentage") + ggtitle("Evolution of Illiteracy over time per region") + facet_wrap(~Region)
 ```
 
 Donc c'est pas tellement un effet de taille, mais on a un problème parce que la taille de notre dernier dataset est très petit. 
-
-
-
-```{r, echo=FALSE}
-## Creation illiterate rate 
-
-illiterate_rate <- inner_join(illiteracy, young_pop, by = c("Country", "Time")) |> rename("YoungPop"= "Value.y", "Illiterate"="Value.x")
-illiterate_rate <- illiterate_rate |> mutate("illiterate_rate"= (Illiterate/YoungPop)*100) |> filter(!is.na(illiterate_rate))
-```
-
 
 ## Map
 ```{r, echo=FALSE}
@@ -594,17 +607,6 @@ ggplot() +
 
 
 
-```{r, echo=FALSE}
-## Creation groupe
-
-illiterate_rate <- illiterate_rate |> group_by(Time) |> 
-  mutate(GROUP = case_when(
-      illiterate_rate <= quantile(illiterate_rate, 0.3, na.rm = TRUE) ~ 1,
-      quantile(illiterate_rate, 0.3, na.rm = TRUE) < illiterate_rate & illiterate_rate <= quantile(illiterate_rate, 0.70, na.rm = TRUE) ~ 2,
-      quantile(illiterate_rate, 0.70, na.rm = TRUE) < illiterate_rate ~ 3,
-      TRUE ~ NA ))
-```
-
 ## Graphical Representation (we need to add group 2 to match the other representation)
 ```{r, echo=FALSE}
 expenditure_rate <- inner_join(educ_expenditure, GDP, by = c("Country", "Time")) |> mutate("exp_rate"= Value.x/Value.y) |> select(Country, Time, -Indicator.x, exp_rate)
@@ -612,21 +614,22 @@ young_pop <- young_pop |> rename("Population"= "Value")
 ```
 
 ```{r, echo=FALSE}
-inner_join(illiterate_rate, expenditure_rate, by = c("Country", "Time")) |> inner_join(young_pop, by = c("Country", "Time")) |> filter(GROUP != 2) |> ggplot(aes(fill=as.factor(GROUP), y=exp_rate, x=as.factor(Time))) + geom_boxplot(position="dodge", alpha=0.5) + coord_flip()+ guides(fill = guide_legend(title = "Group")) + labs(title = "Boxplot of Expenditure on Education Rate Over Time per group",x = "Time", y = "Expenditure on Education Rate") 
+inner_join(illiterate_rate, expenditure_rate, by = c("Country", "Time")) |> inner_join(young_pop, by = c("Country", "Time")) |>  ggplot(aes(fill=as.factor(GROUP), y=exp_rate, x=as.factor(Time))) + geom_boxplot(position="dodge", alpha=0.5) + coord_flip() + guides(fill = guide_legend(title = "Group")) + labs(title = "Distribution of Expenditure on Education Rate Over Time conditionned by group",x = "Time", y = "Expenditure on Education Rate") 
 ```
 
 ## Regression 
-```{r, echo=FALSE}
-enrol_exp <- inner_join(enrolment, expenditure_rate, by=c("Country", "Time")) |> mutate("Value"= Value/100) |> rename("enrolment"= "Value")
+```{r, echo=FALSE, warning=FALSE}
+library(stargazer)
+enrol_exp <- inner_join(enrolment, expenditure_rate, by=c("Country", "Time")) |> mutate("Value"= Value/100) |> rename("enrolment"= "Value") |> mutate("Time"= as.factor(Time))
 
-lm(enrolment ~ exp_rate + as.factor(Time), data = enrol_exp) |> summary() 
+stargazer(lm(enrolment ~ exp_rate + Time, data = enrol_exp), type="text")
 ```
 
 
 
 ## Illiteracy vs enrolement 
 ```{r, echo=FALSE}
-inner_join(illiterate_rate, enrolment, by=c("Country", "Time")) |> filter(Time!=2021, !is.na(GROUP)) |> ggplot(aes(x = Value, y = illiterate_rate, label = Country)) + geom_point(alpha = .3) + facet_wrap(~GROUP) + xlab("enrolment percentage") + ylab("illiterate percentage") + ggtitle("impact of enrolment on illiteracy per group")
+inner_join(illiterate_rate, enrolment, by=c("Country", "Time")) |> filter(!is.na(GROUP)) |> ggplot(aes(x = Value, y = illiterate_rate, label = Country)) + geom_point(alpha = .3) + facet_wrap(~GROUP) + xlab("Enrolment percentage") + ylab("Illiterate percentage") + ggtitle("Link between Enrolment and illiteracy conditionned by Group")
 ```
 
 ## illiteracy vs electricity vs rural (we need to specify that the bars means groups)
@@ -669,9 +672,8 @@ data3 <- inner_join(illiterate_rate,PressFreedomIndex, by = c("Time", "Country")
 vcd::mosaic(GROUP_press ~ GROUP + GROUP_inst, data = data3, direction = c("v", "v", "h"), highlighting_fill = RColorBrewer::brewer.pal(5, "Accent"))
 ```
 
-
 ## Illiteracy vs GDP per capita vs Life expectancy
 ```{r, echo=FALSE}
-inner_join(illiterate_rate,life_expectancy, by = c("Time", "Country")) |> inner_join(GDP_capita, by = c("Time", "Country")) |> mutate("GROUP"=as.factor(GROUP)) |> ggplot(aes(x=`GDP per capita`, y= Value, color = GROUP)) + geom_point(alpha=0.3, size = 10) + scale_size(range = c(.1, 24)) + theme(legend.position="bottom") + ylab("Life Expectancy") + xlab("Gdp per Capita") 
+inner_join(illiterate_rate,life_expectancy, by = c("Time", "Country")) |> inner_join(GDP_capita, by = c("Time", "Country")) |> mutate("GROUP"=as.factor(GROUP)) |> ggplot(aes(x=`GDP per capita`, y= Value, color = GROUP)) + geom_point(alpha=0.3, size = 5) + scale_size(range = c(.1, 24)) + theme(legend.position="bottom") + ylab("Life Expectancy") + xlab("GDP per capita") + ggtitle("Impact of GDP per capita on Life Expectancy conditionned by group") 
 ```
 
