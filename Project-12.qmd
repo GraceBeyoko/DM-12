@@ -138,14 +138,17 @@ enrolment  <- datacleaning_unesco(enrolment)
 illiteracy <-datacleaning_unesco(illiteracy)
 rural <- datacleaning_unesco(rural)
 ```
+On modifie ces deux variables pour qu'elles soient à la même unité que d'autres variables avec lesquelles on va les utiliser.
 ```{r}
 young_pop <- young_pop |> mutate("Value"= Value * 10^3, "Indicator"= "Population aged 15-24 years (number)")
+GDP <- GDP |> mutate("Value"= Value / 10^6, "Indicator"= "GDP, US$ (millions)")
 ```
 
 We now are doing the data cleaning of the electricity variable. 
 ```{r}
 electricity |> 
   names()|>
+  head(n=10) |>
   knitr::kable()
 ```
 
@@ -181,6 +184,7 @@ We now are cleaning the PressFreedom variable.
 ```{r}
 PressFreedom |> 
   names() |>
+  head(n=10) |>
   knitr::kable()
 ```
 
@@ -282,6 +286,7 @@ The young population is expressed in number.
 This total young population table has `r young_pop |> ncol()` columns, which are `r young_pop |> names()`. It has `r young_pop|> nrow()` rows and each of them represents a particular country at a particular year. Here is a table with basic statistics of the total population variable. 
 ```{r}
 young_pop |> 
+  filter(Country != "Falkland Islands (Malvinas)") |> 
   group_by(Country) |> 
   summarise("min" = min(Value, na.rm=TRUE), "median" = median(Value, na.rm=TRUE), "max"= max(Value, na.rm=TRUE), "mean"= round(mean(Value, na.rm=TRUE),2)) |> 
   head(n=10) |> 
@@ -365,11 +370,11 @@ At the end of our work, we anticipate two possible outcomes. First, no obvious t
 First, we want to have a look at the distribution over time of Illiterate demographic (15-24 years old) around the world.
 
 ```{r}
-illiteracy |> filter(Country=="World") |> ggplot(aes(x= Time, y=Value/10^3)) + geom_line() + ylab("Number of illiterate people around the world") + ggtitle("Evolution of Illiteracy (in thousands) over time")
+illiteracy |> filter(Country=="World") |> ggplot(aes(x= Time, y=Value/10^3)) + geom_line() + ylab("Number of illiterates (in thousands)") + ggtitle("Evolution of Illiteracy over the years")
 ```
 
 ```{r}
-illiteracy |> filter(Country %in%  c("Sub-Saharan Africa", "Central and Eastern Europe", "South-Eastern Asia", "Central Asia", "Northern Africa and Western Asia", "Eastern and South-Eastern Asia", "Oceania (excluding Australia and New Zealand")) |> ggplot(aes(x= Time, y=Value/10^3)) + geom_col() + ylab("Number of illiterate people per region") + ggtitle("Evolution of Illiteracy (in thousands) over time per region") + facet_wrap(~Country)
+illiteracy |> filter(Country %in%  c("Sub-Saharan Africa", "Central and Eastern Europe", "South-Eastern Asia", "Central Asia", "Northern Africa and Western Asia", "Eastern and South-Eastern Asia", "Oceania (excluding Australia and New Zealand")) |> ggplot(aes(x= Time, y=Value/10^3)) + geom_col() + ylab("Number of illiterate people (in thousands)") + ggtitle("Evolution of Illiteracy over time per region") + facet_wrap(~Country)
 ```
 ### Creation of Regions
 ```{r}
@@ -531,10 +536,17 @@ young_pop_regions <- young_pop_regions |> rename("young_pop"= "total_value")
 
 ### Join of both datasets
 ```{r}
-inner_join(illiteracy_regions, young_pop_regions, by=c("Region", "Time")) |> mutate("illiterate_rate_regions"= 100*(illiteracy/young_pop)) |> select(Time, Region, illiterate_rate_regions) |> ggplot(aes(x= Time, y=illiterate_rate_regions)) + geom_col() + ylab("Number of illiterate people per region") + ggtitle("Distribution of Illiteracy (rate) over time") + facet_wrap(~Region)
+inner_join(illiteracy_regions, young_pop_regions, by=c("Region", "Time")) |> mutate("illiterate_rate_regions"= 100*(illiteracy/young_pop)) |> select(Time, Region, illiterate_rate_regions) |> ggplot(aes(x= Time, y=illiterate_rate_regions)) + geom_col() + ylab("Illiteracy rate") + ggtitle("Evolution of Illiteracy over time") + facet_wrap(~Region)
 ```
 
 Donc c'est pas tellement un effet de taille, mais on a un problème parce que la taille de notre dernier dataset est très petit. 
+
+## Creation illiterate rate 
+
+```{r}
+illiterate_rate <- inner_join(illiteracy, young_pop, by = c("Country", "Time")) |> rename("YoungPop"= "Value.y", "Illiterate"="Value.x")
+illiterate_rate <- illiterate_rate |> mutate("illiterate_rate"= (Illiterate/YoungPop)*100) |> filter(!is.na(illiterate_rate))
+```
 
 
 ### Map
@@ -564,6 +576,7 @@ ggplot() +
   expand_limits(x = world_map$long, y = world_map$lat) +
   coord_map("moll") +
   theme_map() + ggtitle("Illustration of the world illiteracy mean rate")
+
 ```
 
 
@@ -580,40 +593,26 @@ illiterate_rate <- illiterate_rate |> group_by(Time) |>
 
 ### Graphical Representation
 ```{r}
-expenditure_rate <- inner_join(educ_expenditure, GDP, by = c("Country", "Time")) 
-expenditure_rate <- expenditure_rate |> mutate("exp_rate"= Value.x/Value.y)
-```
-
-
-```{r}
-expenditure_rate <- expenditure_rate |> select(Country, Time, -Indicator.x, exp_rate)
+expenditure_rate <- inner_join(educ_expenditure, GDP, by = c("Country", "Time")) |> mutate("exp_rate"= Value.x/Value.y) |> select(Country, Time, -Indicator.x, exp_rate)
 young_pop <- young_pop |> rename("Population"= "Value")
 ```
 
-
-
 ```{r}
-data_inter <- inner_join(illiterate_rate, expenditure_rate, by = c("Country", "Time"))
-data_inter <- inner_join(data_inter, young_pop, by = c("Country", "Time"))
-```
-
-
-```{r}
-data_inter |> filter(GROUP != 2) |> ggplot(aes(fill=as.factor(GROUP), y=exp_rate, x=as.factor(Time))) + geom_boxplot(position="dodge", alpha=0.5) + coord_flip()+ guides(fill = guide_legend(title = "Group")) + labs(title = "Boxplot of Expenditure on Education Rate Over Time per group",x = "Time", y = "Expenditure on Education Rate") 
+inner_join(illiterate_rate, expenditure_rate, by = c("Country", "Time")) |> inner_join(young_pop, by = c("Country", "Time")) |> filter(GROUP != 2) |> ggplot(aes(fill=as.factor(GROUP), y=exp_rate, x=as.factor(Time))) + geom_boxplot(position="dodge", alpha=0.5) + coord_flip()+ guides(fill = guide_legend(title = "Group")) + labs(title = "Boxplot of Expenditure on Education Rate Over Time per group",x = "Time", y = "Expenditure on Education Rate") 
 ```
 
 
 ```{r}
 enrol_exp <- inner_join(enrolment, expenditure_rate, by=c("Country", "Time")) |> mutate("Value"= Value/100) |> rename("enrolment"= "Value")
 
-lm(enrolment ~ exp_rate + as.factor(Time), data = enrol_exp) |> summary()
+lm(enrolment ~ exp_rate + as.factor(Time), data = enrol_exp) |> summary() 
 ```
 
 
 
 ## Illiteracy vs enrolement 
 ```{r}
-illiteracy_enrol |> filter(Time!=2021, !is.na(GROUP)) |> ggplot(aes(x = Value, y = illiterate_rate, label = Country)) + geom_point(alpha = .3) + facet_wrap(~GROUP) + xlab("enrolment percentage") + ylab("illiterate percentage") + ggtitle("impact of enrolment on illiteracy per group")
+inner_join(illiterate_rate, enrolment, by=c("Country", "Time")) |> filter(Time!=2021, !is.na(GROUP)) |> ggplot(aes(x = Value, y = illiterate_rate, label = Country)) + geom_point(alpha = .3) + facet_wrap(~GROUP) + xlab("enrolment percentage") + ylab("illiterate percentage") + ggtitle("impact of enrolment on illiteracy per group")
 ```
 
 ## illiteracy vs electricity vs rural
@@ -621,13 +620,6 @@ illiteracy_enrol |> filter(Time!=2021, !is.na(GROUP)) |> ggplot(aes(x = Value, y
 rural <- rural |> rename("rural_per"="Value")
 electricity <- electricity |> rename("electricity_per"="Value")
 GDP_capita <- GDP_capita |> rename("GDP per capita"="Value")
-```
-
-
-```{r}
-inner_join(illiterate_rate, electricity, by = c("Time", "Country")) |>  inner_join(rural, by = c("Time", "Country")) |> inner_join(GDP_capita, by = c("Time", "Country")) |> filter(Time == 2021) |> 
-ggplot(aes(x = `GDP per capita`, y = illiterate_rate,size =rural_per, color = electricity_per)) +
-geom_point(alpha = .3) + scale_color_gradient(low = "green", high = "red") + theme_minimal(base_size = 14) + facet_wrap(~GROUP)
 ```
 ```{r}
 data2 <- inner_join(illiterate_rate, electricity, by = c("Time", "Country")) |>  inner_join(rural, by = c("Time", "Country")) 
@@ -659,12 +651,13 @@ institution <- institution |> group_by(Time) |> mutate(GROUP_inst = case_when(
   7 < `Value` ~ 3,
   TRUE ~ NA))
 
-inner_join(illiterate_rate,PressFreedomIndex, by = c("Time", "Country")) |> inner_join(institution, by = c("Time", "Country")) |> filter(Time == 2021) 
+data3 <- inner_join(illiterate_rate,PressFreedomIndex, by = c("Time", "Country")) |> inner_join(institution, by = c("Time", "Country"))
+vcd::mosaic(GROUP_press ~ GROUP + GROUP_inst, data = data3, direction = c("v", "v", "h"), highlighting_fill = RColorBrewer::brewer.pal(5, "Accent"))
 ```
 
 
 ## Illiteracy vs GDP per capita vs Life expectancy
 ```{r}
-inner_join(illiterate_rate,life_expectancy, by = c("Time", "Country")) |> inner_join(GDP_capita, by = c("Time", "Country")) |> mutate("GROUP"=as.factor(GROUP)) |> ggplot(aes(x=Value.y, y=Value.x, color = GROUP)) + geom_point(alpha=0.3, size = 10) + scale_size(range = c(.1, 24)) + theme(legend.position="bottom") + ylab("Life Expectancy") + xlab("Gdp per Capita") 
+inner_join(illiterate_rate,life_expectancy, by = c("Time", "Country")) |> inner_join(GDP_capita, by = c("Time", "Country")) |> mutate("GROUP"=as.factor(GROUP)) |> ggplot(aes(x=`GDP per capita`, y= Value, color = GROUP)) + geom_point(alpha=0.3, size = 10) + scale_size(range = c(.1, 24)) + theme(legend.position="bottom") + ylab("Life Expectancy") + xlab("Gdp per Capita") 
 ```
 
