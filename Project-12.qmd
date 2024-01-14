@@ -336,41 +336,18 @@ At the end of our work, we anticipate two possible outcomes. First, no obvious t
 
 ## Graphical representation of our target variable
 
-As stated in the introduction, there has been a significant decline in the global illiterate population over time. The graphic expressed this idea. Indeed, the number of illiterates worldwide decreased from 135 000 thousand in 2005 to approximately 9 000 thousand in 2021. 
+As stated in the introduction, there has been a significant decline in the global illiterate population over time. The graphic below expresses this idea. Indeed, the number of illiterates worldwide decreased from 135 000 thousands in 2005 to approximately 90 000 thousands in 2021. 
 ```{r, echo=FALSE}
 illiteracy |> filter(Country=="World") |> ggplot(aes(x= Time, y=Value/10^3)) + geom_line() + ylab("Number of illiterates (in thousands)") + ggtitle("Evolution of Illiteracy over the years")
 ```
 
-
-
 ## Size effect ?
 
-When we look at the amount of illiterate individuals by region, it is evident that this group is not dispersed equally. In fact, nearly all of the world's illiterate population live in Sub-Saharan Africa. As opposed to the Europe and Central Asia regions, which are both at the extreme ends of the spectrum. We do, however, also know that Africa has a much larger population than these two regions. Therefore, the huge number of illiterate persons in Africa may be explained by a size effect. For this reason, in the second graphic, we have chosen to examine the distribution of the illiterate population in terms of share per region. From our results, we clearly see that the distribution stays the same.
+When we look at the amount of illiterate individuals by region, it is evident that those individuals are not dispersed equally. In fact, nearly all of the world's illiterate population live in Sub-Saharan Africa. As opposed to the Europe and Central Asia regions, which are both at the extreme ends of the spectrum. We do, however, also know that Africa has a much larger population than these two regions. Therefore, the huge number of illiterate persons in Africa may be explained by a size effect. For this reason, in the second graphic, we have chosen to examine the distribution of the illiterate population in terms of share per region. From our results, we clearly see that the distribution stays the same.
 ```{r, echo=FALSE}
 illiteracy |> filter(Country %in%  c("Sub-Saharan Africa", "Central and Eastern Europe", "South-Eastern Asia", "Central Asia", "Northern Africa and Western Asia", "Eastern and South-Eastern Asia", "Oceania (excluding Australia and New Zealand")) |> ggplot(aes(x= Time, y=Value/10^3)) + geom_col() + ylab("Number of illiterate people (in thousands)") + ggtitle("Evolution of Illiteracy over time per region") + facet_wrap(~Country)
 ```
 
-```{r, echo=FALSE}
-# We only had the number of illiterates and the number of young population for each country and each year. So now we create a illiteracy rate variable
-
-illiterate_rate <- inner_join(illiteracy, young_pop, by = c("Country", "Time")) |> rename("YoungPop"= "Value.y", "Illiterate"="Value.x")
-illiterate_rate <- illiterate_rate |> mutate("illiterate_rate"= (Illiterate/YoungPop)*100) |> filter(!is.na(illiterate_rate)) |> select(-starts_with(c("LOCATION","Indicator")))
-```
-
-```{r, echo=FALSE}
-# We create 3 groups of countries based on illiteracy rate
-
-illiterate_rate <- illiterate_rate |> group_by(Time) |> 
-  mutate(GROUP = case_when(
-      illiterate_rate <= quantile(illiterate_rate, 0.3, na.rm = TRUE) ~ 1,
-      quantile(illiterate_rate, 0.3, na.rm = TRUE) < illiterate_rate & illiterate_rate <= quantile(illiterate_rate, 0.70, na.rm = TRUE) ~ 2,
-      quantile(illiterate_rate, 0.70, na.rm = TRUE) < illiterate_rate ~ 3,
-      TRUE ~ NA ))
-```
-
-```{r, echo=FALSE, message=F}
-illiterate_rate |> group_by(Time) |> summarise("total_young_pop"= sum(YoungPop), "total_illiterate"=sum(Illiterate)) |> mutate("total_rate"=total_illiterate/total_young_pop) |> ggplot(aes(x=Time, y=total_rate)) + ylab("Percentage of illiterates") + geom_smooth(color="black") + ggtitle("Evolution of Illiteracy over the years") + geom_point()
-```
 
 ```{r, echo=FALSE}
 ## We represented the evolution of illiteracy conditioned by the region of the world to which countries belong. These regions were already aggregated in the illiteracy variable, but not the illiteracy rate variable we created. So we created these regions manually
@@ -523,9 +500,28 @@ inner_join(illiteracy_regions, young_pop_regions, by=c("Region", "Time")) |> mut
 
 
 
+```{r, echo=FALSE}
+# We only had the number of illiterates and the number of young population for each country and each year. So now we create a illiteracy rate variable
+
+illiterate_rate <- inner_join(illiteracy, young_pop, by = c("Country", "Time")) |> rename("YoungPop"= "Value.y", "Illiterate"="Value.x")
+illiterate_rate <- illiterate_rate |> mutate("illiterate_rate"= (Illiterate/YoungPop)*100) |> filter(!is.na(illiterate_rate)) |> select(-starts_with(c("LOCATION","Indicator")))
+```
+
+```{r, echo=FALSE}
+# We create 3 groups of countries based on illiteracy rate
+
+illiterate_rate <- illiterate_rate |> group_by(Time) |> 
+  mutate(GROUP = case_when(
+      illiterate_rate <= quantile(illiterate_rate, 0.3, na.rm = TRUE) ~ 1,
+      quantile(illiterate_rate, 0.3, na.rm = TRUE) < illiterate_rate & illiterate_rate <= quantile(illiterate_rate, 0.70, na.rm = TRUE) ~ 2,
+      quantile(illiterate_rate, 0.70, na.rm = TRUE) < illiterate_rate ~ 3,
+      TRUE ~ NA ))
+```
+
+
 ## Map
 
-We now use this world map to zoom out of the region approach. This map represents the mean percentage of illiterate people (between 2005 and 2021) per country. The gray area represented the countries with missing data. Once more, it is clear that the population of illiterates is not dispersed equally. She is concentrated in specific countries. Thanks to this observation, we decided to concentrate the remainder of our investigation in those groups as a result. To do this, we will create three groups of illiteracy: the first group will consist of the 30% of nations with the lowest rate of illiteracy, the second group will consist of the 40% of nations with a medium rate of illiteracy, and the final group will consist of the 30% of nations with the highest rate of illiteracy. 
+We now use this world map to zoom out of the region approach. This map represents the mean percentage of illiterate people (between 2005 and 2021) per country. The gray area represents the countries with missing data. Once more, it is clear that the population of illiterates is not dispersed equally. They are concentrated in specific countries. Thanks to this observation, we decided to concentrate the remainder of our investigation in those groups as a result. To do this, we will create three groups of illiteracy: the first group will consist of the 30% of nations with the lowest rate of illiteracy, the second group will consist of the 40% of nations with a medium rate of illiteracy, and the final group will consist of the 30% of nations with the highest rate of illiteracy. 
 ```{r, echo=FALSE}
 world_map <- map_data("world")
 world_map = map_data("world") |> filter(! long > 180)
@@ -578,21 +574,12 @@ inner_join(illiterate_rate, expenditure_rate, by = c("Country", "Time")) |> inne
 
 
 
-## Regression : Enrolment vs Expenditure over time
-```{r, echo=FALSE, message=FALSE, warning=FALSE}
-# Joining of our variables of interest and renaming
-
-enrol_exp <- inner_join(enrolment, expenditure_rate, by=c("Country", "Time")) |> mutate("exp_rate"=exp_rate*100, "Time"=as.factor(Time)) |> rename("enrolment"="Value")
-stargazer(lm(enrolment ~ exp_rate + Time, data = enrol_exp), type="text")
-```
+## Regression : Illiteracy vs enrolment over Time
 
 
-
-## Illiteracy vs enrolement 
-```{r, echo=FALSE}
-# Joining of our variables of interest
-
-inner_join(illiterate_rate, enrolment, by=c("Country", "Time")) |> filter(!is.na(GROUP)) |> ggplot(aes(x = Value, y = illiterate_rate, label = Country)) + geom_point(alpha = .3) + facet_wrap(~GROUP) + xlab("Enrolment percentage") + ylab("Illiterate percentage") + ggtitle("Link between Enrolment and illiteracy conditionned by Group")
+```{r, echo=F, message=F}
+illiterate_enrol <- inner_join(illiterate_rate, enrolment, by=c("Country", "Time")) |> rename("enrolment"= "Value") |> mutate("Time"= as.factor(Time))
+stargazer(lm(illiterate_rate ~ enrolment + Time, data = illiterate_enrol), type="text")
 ```
 
 ## illiteracy vs electricity vs rural 
@@ -622,11 +609,8 @@ quantile2 <- quantile(data2$illiterate_rate, 0.7, na.rm=T)
 data2 |> na.omit() |> ggplot(aes(x = rural_per, y = illiterate_rate, color = electricity_per)) +  geom_point(alpha=.5) + scale_color_gradient(low = "green", high = "red") + geom_hline(yintercept = quantile1, linetype = "dashed", color = "black") + geom_hline(yintercept = quantile2, linetype = "dashed", color = "black") + labs(title = "Relation between rural, illiterate and electricity share", x = "Rural percentage", y = "Illiterate percentage") + annotate("text" , x = 80, y = .2, label = "Group 1", size = 4, color = "#505050") + annotate("text" , x = 80, y = 5, label = "Group 2", size = 4, color = "#505050") + annotate("text" , x = 80, y = 50, label = "Group 3", size = 4, color = "#505050")
 ```
 
-
-
-## illiteracy vs PressFreedom vs Institutions 
 ```{r, echo=FALSE, warning=F}
-# Creation of groups of countries based on group of Press Freedom Index (given by Reporters Sans Frontieres). Good = 0–15 points; Satisfactory = 15–25; Problematic = 25–35; Difficult = 35–55; Very;serious = 55–100.
+# Creation of groups of countries based on group of Press Freedom Index (given by Reporters Sans Frontieres). Good = 0–15 points; Satisfactory = 15–25; Problematic = 25–35; Difficult = 35–55; Very serious = 55–100.
 
 PressFreedomIndex <- PressFreedomIndex |>
   group_by(Time) |>
@@ -651,16 +635,41 @@ institution <- institution |> group_by(Time) |> mutate(GROUP_inst = case_when(
 # Joining of our variables of interests
 
 data3 <- inner_join(illiterate_rate,PressFreedomIndex, by = c("Time", "Country")) |> inner_join(institution, by = c("Time", "Country")) |> mutate("GROUP"= as.factor(GROUP), "GROUP_press"= as.factor(GROUP_press), "GROUP_inst"= as.factor(GROUP_inst)) |> select(-starts_with(c("Indicator", "LOCATION")), -Illiterate, -YoungPop)
-ggplot(data = data3) +geom_mosaic(aes(x=product(GROUP_press), fill = GROUP_press, conds = product(GROUP_inst))) + facet_wrap(~GROUP) + xlab("GROUP Stability of Institutions") + ylab("GROUP of Press Freedom") + labs(fill = "GROUP of Press Freedom") + ggtitle("Link between illiteracy and institution conditionned per pressfreedom groups")
 ```
 
+## Illiteracy vs Institution Stability 
+
+In this section, we examine the relationship between the illiteracy rate  and the Bertelsmann Transformation Index which measures the level of institutional stability.
+
+In order to do so, we divided the countries into three categories based on their Institutional Stability Index: group 1 had the lowest level of stability, while group 3 had the highest level. 
+Given that we are dealing with two categorical variables, we have opted for a mosaic plot. 
+
+As we can see below, the group with the lowest level of illiteracy has the largest share of group 1 (poor institutional stability).
+The group with the middle level of illiteracy has the largest share, almost half, of group 3 (best institutional stability). 
+Finally, the group with the highest level of illiteracy has more or less the same distribution as the group with the lowest level of illiteracy in terms of institutional stability.  
+So given the information we have, the stability of institutions cannot characterise the two extreme groups of level of illiteracy.
+
+```{r, echo=F, warning=F}
+ggplot(data = data3) +geom_mosaic(aes(x=product(GROUP_inst), fill = GROUP_inst, conds = product(GROUP)))
+```
+
+## Illiteracy vs Press Freedom
+
+To represent the relationship between illiteracy and press freedom, we choose to create press freedom groups. Those groups are defined by Reporters Sans Frontieres, with 0-15 being Good, 15-25 Satisfactory, 25-35 Problematic, 35-55 Difficult and 55-100 Very Serious. 
+Since these two variables are both categorical, we depict  them in the mosaic plot that you see below. 
+With the use of this representation, it appears that every illiteracy group has the same proportion of Press Freedom groups. In other words, that means that regardless of the illiteracy level of the country the press freedom groups are evenly dispersed. As a result, given our graphic, we are unable to clearly link illiteracy to press freedom. 
+
+
+```{r, echo=F}
+ggplot(data = data3) +geom_mosaic(aes(x=product(GROUP_press), fill = GROUP_press, conds = product(GROUP)))
+```
 
 
 ## Illiteracy vs GDP per capita vs Life expectancy
 
-The graph below shows the relationship between life expectancy and GDP per capita conditioned on illiteracy. We can see that there is a positive relationship between GDP per capita and life expectancy. Countries with high GDP per capita tend to have a high life expectancy. Conversely, life expectancy is lowest in countries with the lowest GDP per capita. This is not a surprising result since GDP per capita is one of many dimensions to measure living standards. So it would make sense in the way that we can speculate that a high GDP per capita might help with access to health and good nutrition for instance. 
+The graph below shows the relationship between life expectancy and GDP per capita conditioned on illiteracy. We can see that there is a positive relationship between GDP per capita and life expectancy. Countries with high GDP per capita tend to have higher life expectancy. Conversely, life expectancy is lower in countries with the low GDP per capita. This is not a surprising result since GDP per capita is one of many dimensions to measure living standards. Therefore, it would seem to reasonable to say that a high GDP per capita might facilitate access to good health care and and good nutrition for instance. 
 
-Furthermore, we can see that life expectancy is represented as a concave function of GDP per capita. Indeed, under a certain threshold the slope of the curve is extremely high and then extremely low. In other words, under the threshold, an additional unit of GDP per capita increases life expectancy to a large extent and above this threshold an additional unit of GDP per capita doesn’t increase that much life expectancy. Here we can see that this threshold is about 12 500 dollars. So this can be interpreted as follows: when the GDP per capita is below 12 500 dollars, the increase of GDP per capita highly increases life expectancy, and when GDP is above 12 500 dollars an increase of GDP per capita lightly increases life expectancy.
+Furthermore, we can see that life expectancy is represented as a concave function of GDP per capita. Indeed, under a certain threshold the slope of the curve is extremely high and then extremely low. In other words, under the threshold, an additional unit of GDP per capita increases life expectancy to a large extent and above this threshold an additional unit of GDP per capita does not increase significantly life expectancy. Here we can see that this threshold is around 12 500 dollars. So this can be interpreted as follows: when the GDP per capita is below 12 500 dollars, the increase of GDP per capita highly increases life expectancy, and when GDP is above 12 500 dollars an increase of GDP per capita lightly increases life expectancy.
 
 Now let’s analyze this graph through the lens of the illiteracy variable. In the graph, illiteracy is represented by colors, and each of them corresponds to illiteracy groups. 
 
