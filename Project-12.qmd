@@ -328,7 +328,7 @@ That being said, the aim of our research is not to answer the "why" question. In
 
 Our goal is to find traits that countries with high levels of young illiterate people have in common so that we can see trends within this group. In order to do so, we choose to focus on the young illiterate population, which is defined as those between the ages of 15 and 24. We'll be looking at this population country by country. Our main goal is to determine whether nations with high rates of youth illiteracy have something in common. 
 
-To achieve this, we have selected multiple variables that we believe provide insightful information, including institutional stability, overall population, rural population, GDP, GDP per capita, access to electricity, and the percentage of enrolment by educational level, among others. 
+To achieve this, we have selected multiple variables that we believe provide insightful information, including institutional stability, overall population, rural population, GDP, GDP per capita, access to electricity, and the percentage of enrollment by educational level, among others. We chose to only select primary school level for the enrollment data set because it is at this grade that children are taught how to read and write. Also, all of our datasets were not available in the years preceding 2005 to 2021. That is why we decided to focus on 2005-2021 time period. However, we are aware of the fact that a 17 year time period is not enough to convey an accurate evolution of illiteracy. 
 
 At the end of our work, we anticipate two possible outcomes. First, no obvious trends show up, indicating that the distribution of the young illiterate population is actually random and dispersed quite evenly throughout the world's population. Second, similarities are observed among countries with high levels of illiteracy which will allow us to speculate on potential explanations for illiteracy.
 
@@ -576,6 +576,8 @@ inner_join(illiterate_rate, expenditure_rate, by = c("Country", "Time")) |> inne
 
 ## Regression between Illiteracy and enrolment over Time
 
+Here we want to take a closer look at the relationship between illiteracy and enrollment over time. To do so, we are going to do a regression with illiteracy as the dependent variable and enrollment as the independent one. The table below shows that the coefficients associated with time are not statistically significant (no star). In other words, the probability that they’re different to 0 is not large enough for us to consider an impact of Time on the relation between illiteracy and enrollment. However, the coefficient associated to the impact of enrollment and the constant are highly statistically significant. 
+An interpretation of this would be the following: an increase of one percentage point in enrollment decreases illiteracy rate by one percentage point. This result seems more than reasonable. Indeed, having a higher proportion of population that goes to primary school ensures a lower level of illiteracy.
 
 ```{r, echo=F, message=F}
 illiterate_enrol <- inner_join(illiterate_rate, enrolment, by=c("Country", "Time")) |> rename("enrolment"= "Value") |> mutate("Time"= as.factor(Time))
@@ -679,3 +681,22 @@ As we can see, group 3, which has the greatest rate of illiteracy, also has the 
 
 inner_join(illiterate_rate,life_expectancy, by = c("Time", "Country")) |> inner_join(GDP_capita, by = c("Time", "Country")) |> mutate("GROUP"=as.factor(GROUP)) |> ggplot(aes(x=`GDP per capita`, y= Value, color = GROUP)) + geom_point(alpha=0.3, size = 5) + scale_size(range = c(.1, 24)) + theme(legend.position="bottom") + ylab("Life Expectancy") + xlab("GDP per capita") + ggtitle("Impact of GDP per capita on Life Expectancy conditionned by group") 
 ```
+
+
+
+## Conclusion
+
+In summary, throughout our study we revealed that illiteracy is not an evenly spread phenomenon. In fact, illiteracy is concentrated in  small number of global areas. Based on this discovery, we decided to look for common traits in countries with high level of illiteracy and the one with low level of illiteracy. We were able to see that countries with low level of illiteracy tends to have higher primary school enrollment rates, predominantly urban with high access to electricity and high life expectancy. The inverse holds for the group of countries with the highest illiteracy rate. To our surprise, the Press Freedom Index and the stability of Institutions did not characterized one group more than the other.
+
+
+
+
+
+
+
+
+
+
+
+
+
