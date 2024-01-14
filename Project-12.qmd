@@ -653,6 +653,18 @@ ggplot(data = data3) +geom_mosaic(aes(x=product(GROUP_press), fill = GROUP_press
 
 
 ## Illiteracy vs GDP per capita vs Life expectancy
+
+The graph below shows the relationship between life expectancy and GDP per capita conditioned on illiteracy. We can see that there is a positive relationship between GDP per capita and life expectancy. Countries with high GDP per capita tend to have a high life expectancy. Conversely, life expectancy is lowest in countries with the lowest GDP per capita. This is not a surprising result since GDP per capita is one of many dimensions to measure living standards. So it would make sense in the way that we can speculate that a high GDP per capita might help with access to health and good nutrition for instance. 
+
+Furthermore, we can see that life expectancy is represented as a concave function of GDP per capita. Indeed, under a certain threshold the slope of the curve is extremely high and then extremely low. In other words, under the threshold, an additional unit of GDP per capita increases life expectancy to a large extent and above this threshold an additional unit of GDP per capita doesn’t increase that much life expectancy. Here we can see that this threshold is about 12 500 dollars. So this can be interpreted as follows: when the GDP per capita is below 12 500 dollars, the increase of GDP per capita highly increases life expectancy, and when GDP is above 12 500 dollars an increase of GDP per capita lightly increases life expectancy.
+
+Now let’s analyze this graph through the lens of the illiteracy variable. In the graph, illiteracy is represented by colors, and each of them corresponds to illiteracy groups. 
+
+We can see that group 1, the group with the lowest illiteracy rate, is the one with the highest and narrowest window of values for life expectancy, between 70 and 82 for most of them. When it comes to GDP per capita, Group 1 is a heterogeneous group, as bubbles are dispersed, but is the group with the highest GDP per capita over all. 
+
+As we can see, group 3, which has the greatest rate of illiteracy, also has the lowest life expectancy with the biggest range of values, between 55 and 70. This group has the lowest GDP per capita and the narrowest range of values for GDP per capita. 
+
+Group 2 is the 'middle' group, whether measured by GDP per capita or life expectancy. 
 ```{r, echo=FALSE}
 # Joining of our data of interest
 
