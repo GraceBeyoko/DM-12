@@ -237,9 +237,7 @@ PressFreedomIndex <- PressFreedomIndex |>
 
 Since our analysis is not at the individual level, we are going to only select "Both Sexes" values. Then, we will remove the columns we deem unnecessary and rename the remaining columns. 
 
-## Renaming
-
-To finish, we now are cleaning the Institution variable, which only consists of renaming its columns. 
+ 
 ```{r, echo=FALSE}
 institution <- institution |> rename("Country" = "Entity", "LOCATION"= "Code", "Value"= "stability_dem_inst_bti", "Time"= "Year")|> mutate("Indicator"= "Stability of Institutions")
 ```
@@ -606,7 +604,7 @@ ggplot() +
 
 
 
-## Graphical Representation (we need to add group 2 to match the other representation)
+## Graphical Representation 
 ```{r, echo=FALSE}
 # We create a new variable to have expenditure on education as a rate of the GDP (to avoid level effect).
 expenditure_rate <- inner_join(educ_expenditure, GDP, by = c("Country", "Time")) |> mutate("exp_rate"= Value.x/Value.y) |> select(Country, Time, -Indicator.x, exp_rate)
