@@ -16,6 +16,8 @@ library(knitr)
 library(patchwork)
 library(stringr)
 library(scatterplot3d)
+library(ggmosaic)
+library(stargazer)
 ```
 
 
@@ -618,11 +620,10 @@ inner_join(illiterate_rate, expenditure_rate, by = c("Country", "Time")) |> inne
 ```
 
 ## Regression 
-```{r, echo=FALSE, warning=FALSE}
-library(stargazer)
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
 enrol_exp <- inner_join(enrolment, expenditure_rate, by=c("Country", "Time")) |> mutate("Value"= Value/100) |> rename("enrolment"= "Value") |> mutate("Time"= as.factor(Time))
 
-stargazer(lm(enrolment ~ exp_rate + Time, data = enrol_exp), type="text")
+#stargazer(lm(enrolment ~ exp_rate + Time, data = enrol_exp), type="text")
 ```
 
 
@@ -632,7 +633,7 @@ stargazer(lm(enrolment ~ exp_rate + Time, data = enrol_exp), type="text")
 inner_join(illiterate_rate, enrolment, by=c("Country", "Time")) |> filter(!is.na(GROUP)) |> ggplot(aes(x = Value, y = illiterate_rate, label = Country)) + geom_point(alpha = .3) + facet_wrap(~GROUP) + xlab("Enrolment percentage") + ylab("Illiterate percentage") + ggtitle("Link between Enrolment and illiteracy conditionned by Group")
 ```
 
-## illiteracy vs electricity vs rural (we need to specify that the bars means groups)
+## illiteracy vs electricity vs rural 
 ```{r, echo=FALSE}
 rural <- rural |> rename("rural_per"="Value")
 electricity <- electricity |> rename("electricity_per"="Value")
@@ -644,11 +645,11 @@ data2 <- inner_join(illiterate_rate, electricity, by = c("Time", "Country")) |> 
 quantile1 <- quantile(data2$illiterate_rate, 0.3, na.rm=T)
 quantile2 <- quantile(data2$illiterate_rate, 0.7, na.rm=T)
 
-data2 |> select(rural_per, illiterate_rate, electricity_per, Time) |> na.omit() |> ggplot(aes(x = rural_per, y = illiterate_rate, color = electricity_per)) +  geom_point(alpha=.5) + scale_color_gradient(low = "green", high = "red") + geom_hline(yintercept = quantile1, linetype = "dashed", color = "black") + geom_hline(yintercept = quantile2, linetype = "dashed", color = "black") + labs(title = "Relation between rural, illiterate and electricity share", x = "Rural percentage", y = "Illiterate percentage")
+data2 |> select(rural_per, illiterate_rate, electricity_per, Time) |> na.omit() |> ggplot(aes(x = rural_per, y = illiterate_rate, color = electricity_per)) +  geom_point(alpha=.5) + scale_color_gradient(low = "green", high = "red") + geom_hline(yintercept = quantile1, linetype = "dashed", color = "black") + geom_hline(yintercept = quantile2, linetype = "dashed", color = "black") + labs(title = "Relation between rural, illiterate and electricity share", x = "Rural percentage", y = "Illiterate percentage") + annotate("text" , x = 80, y = .2, label = "Group 1", size = 4, color = "#505050") + annotate("text" , x = 80, y = 5, label = "Group 2", size = 4, color = "#505050") + annotate("text" , x = 80, y = 50, label = "Group 3", size = 4, color = "#505050")
 ```
 
 
-## illiteracy vs PressFreedom vs Institutions (add legend to specify that color = Group_press so we can remove that y-axis + rename the axis)
+## illiteracy vs PressFreedom vs Institutions 
 ```{r, echo=FALSE}
 PressFreedomIndex <- PressFreedomIndex |>
   group_by(Time) |>
@@ -668,8 +669,10 @@ institution <- institution |> group_by(Time) |> mutate(GROUP_inst = case_when(
   7 < `Value` ~ 3,
   TRUE ~ NA))
 
-data3 <- inner_join(illiterate_rate,PressFreedomIndex, by = c("Time", "Country")) |> inner_join(institution, by = c("Time", "Country"))
-vcd::mosaic(GROUP_press ~ GROUP + GROUP_inst, data = data3, direction = c("v", "v", "h"), highlighting_fill = RColorBrewer::brewer.pal(5, "Accent"))
+data3 <- inner_join(illiterate_rate,PressFreedomIndex, by = c("Time", "Country")) |> inner_join(institution, by = c("Time", "Country")) |> mutate("GROUP"= as.factor(GROUP), "GROUP_press"= as.factor(GROUP_press), "GROUP_inst"= as.factor(GROUP_inst)) 
+
+ggplot(data = data3) +geom_mosaic(aes(x=product(GROUP_press), fill = GROUP_press, conds = product(GROUP_inst))) + facet_wrap(~GROUP) + xlab("GROUP Stability of Institutions") + ylab("GROUP of Press Freedom") + labs(fill = "GROUP of Press Freedom") + ggtitle("Link between illiteracy and institution conditionned per pressfreedom groups")
+
 ```
 
 ## Illiteracy vs GDP per capita vs Life expectancy
