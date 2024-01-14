@@ -334,7 +334,7 @@ At the end of our work, we anticipate two possible outcomes. First, no obvious t
 
 
 
-## Graphical representation of our target variable
+## Overall trend of our target variable
 
 As stated in the introduction, there has been a significant decline in the global illiterate population over time. The graphic below expresses this idea. Indeed, the number of illiterates worldwide decreased from 135 000 thousands in 2005 to approximately 90 000 thousands in 2021. 
 ```{r, echo=FALSE}
@@ -519,7 +519,7 @@ illiterate_rate <- illiterate_rate |> group_by(Time) |>
 ```
 
 
-## Map
+## World map representation
 
 We now use this world map to zoom out of the region approach. This map represents the mean percentage of illiterate people (between 2005 and 2021) per country. The gray area represents the countries with missing data. Once more, it is clear that the population of illiterates is not dispersed equally. They are concentrated in specific countries. Thanks to this observation, we decided to concentrate the remainder of our investigation in those groups as a result. To do this, we will create three groups of illiteracy: the first group will consist of the 30% of nations with the lowest rate of illiteracy, the second group will consist of the 40% of nations with a medium rate of illiteracy, and the final group will consist of the 30% of nations with the highest rate of illiteracy. 
 ```{r, echo=FALSE}
@@ -552,7 +552,7 @@ ggplot() +
 
 
 
-## Graphical Representation between education expenditure and illiteracy rate (per group) over time
+## Boxplot between education expenditure and illiteracy rate (per group) over time
 
 With this boxplot representation, our goal is to compare the distribution of education expenditures among our illiteracy groups. Here, we observe that the median of the nations with the lowest rates of illiteracy (i.e group 1) is frequently found outside of the box of the countries with the highest illiteracy rate. This indicates that there is a significant difference from one another. Furthermore, we note that group 2 generally has an education expenditure between the one of group 1 and the ones of group 2. Surprisingly, we did not observe any trend when it comes to the dispersion within the groups or other key information.
 ```{r, echo=FALSE}
@@ -574,7 +574,7 @@ inner_join(illiterate_rate, expenditure_rate, by = c("Country", "Time")) |> inne
 
 
 
-## Regression : Illiteracy vs enrolment over Time
+## Regression between Illiteracy and enrolment over Time
 
 
 ```{r, echo=F, message=F}
@@ -582,7 +582,7 @@ illiterate_enrol <- inner_join(illiterate_rate, enrolment, by=c("Country", "Time
 stargazer(lm(illiterate_rate ~ enrolment + Time, data = illiterate_enrol), type="text")
 ```
 
-## illiteracy vs electricity vs rural 
+## Relationship between rural areas, access to electricity and illiteracy group
 
 This representation allows us to observe that countries that belong to group 1 tend to have less rural areas which make them predominantly urban. On top of that they are also the one with the highest access to electricity (in terms of percentage). Regarding the second set of countries, they are also primarily urban but here they have a more uneven access to electricity. The rural distribution is far more varied among the countries with the highest rates of illiteracy. But the majority of those countries have low access to electricity. Looking at this graphic, the positive correlation between rural and electricity is clear. Indeed, the countries with the lowest rural areas are the ones with the highest electricity. They also happened to be the one with less illiteracy. So it appears that illiteracy is more present in rural countries. 
 ```{r, echo=FALSE}
@@ -609,7 +609,7 @@ quantile2 <- quantile(data2$illiterate_rate, 0.7, na.rm=T)
 data2 |> na.omit() |> ggplot(aes(x = rural_per, y = illiterate_rate, color = electricity_per)) +  geom_point(alpha=.5) + scale_color_gradient(low = "green", high = "red") + geom_hline(yintercept = quantile1, linetype = "dashed", color = "black") + geom_hline(yintercept = quantile2, linetype = "dashed", color = "black") + labs(title = "Relation between rural, illiterate and electricity share", x = "Rural percentage", y = "Illiterate percentage") + annotate("text" , x = 80, y = .2, label = "Group 1", size = 4, color = "#505050") + annotate("text" , x = 80, y = 5, label = "Group 2", size = 4, color = "#505050") + annotate("text" , x = 80, y = 50, label = "Group 3", size = 4, color = "#505050")
 ```
 
-```{r, echo=FALSE, warning=F}
+```{r, echo=FALSE, warning=FALSE}
 # Creation of groups of countries based on group of Press Freedom Index (given by Reporters Sans Frontieres). Good = 0–15 points; Satisfactory = 15–25; Problematic = 25–35; Difficult = 35–55; Very serious = 55–100.
 
 PressFreedomIndex <- PressFreedomIndex |>
@@ -637,47 +637,43 @@ institution <- institution |> group_by(Time) |> mutate(GROUP_inst = case_when(
 data3 <- inner_join(illiterate_rate,PressFreedomIndex, by = c("Time", "Country")) |> inner_join(institution, by = c("Time", "Country")) |> mutate("GROUP"= as.factor(GROUP), "GROUP_press"= as.factor(GROUP_press), "GROUP_inst"= as.factor(GROUP_inst)) |> select(-starts_with(c("Indicator", "LOCATION")), -Illiterate, -YoungPop)
 ```
 
-## Illiteracy vs Institution Stability 
+
+
+## Correlation between Illiteracy and Institution Stability 
 
 In this section, we examine the relationship between the illiteracy rate  and the Bertelsmann Transformation Index which measures the level of institutional stability.
 
-In order to do so, we divided the countries into three categories based on their Institutional Stability Index: group 1 had the lowest level of stability, while group 3 had the highest level. 
-Given that we are dealing with two categorical variables, we have opted for a mosaic plot. 
+In order to do so, we divided the countries into three categories based on their Institutional Stability Index: group 1 had the lowest level of stability, while group 3 had the highest level. Given that we are dealing with two categorical variables, we have opted for a mosaic plot. 
 
 As we can see below, the group with the lowest level of illiteracy has the largest share of group 1 (poor institutional stability).
 The group with the middle level of illiteracy has the largest share, almost half, of group 3 (best institutional stability). 
-Finally, the group with the highest level of illiteracy has more or less the same distribution as the group with the lowest level of illiteracy in terms of institutional stability.  
-So given the information we have, the stability of institutions cannot characterise the two extreme groups of level of illiteracy.
-
-```{r, echo=F, warning=F}
-ggplot(data = data3) +geom_mosaic(aes(x=product(GROUP_inst), fill = GROUP_inst, conds = product(GROUP)))
+Finally, the group with the highest level of illiteracy has more or less the same distribution as the group with the lowest level of illiteracy in terms of institutional stability. So given the information we have, the stability of institutions cannot characterise the two extreme groups of level of illiteracy.
+```{r, echo=FALSE, warning=FALSE}
+ggplot(data = data3) +geom_mosaic(aes(x=product(GROUP_inst), fill = GROUP_inst, conds = product(GROUP))) + labs(title = "Mosaic representation of illiteracy and institution stability", x= "Group illiteracy", y= "Group institution", fill = "Group of institution")
 ```
 
-## Illiteracy vs Press Freedom
+
+
+## Relation between Illiteracy and Press Freedom
 
 To represent the relationship between illiteracy and press freedom, we choose to create press freedom groups. Those groups are defined by Reporters Sans Frontieres, with 0-15 being Good, 15-25 Satisfactory, 25-35 Problematic, 35-55 Difficult and 55-100 Very Serious. 
 Since these two variables are both categorical, we depict  them in the mosaic plot that you see below. 
 With the use of this representation, it appears that every illiteracy group has the same proportion of Press Freedom groups. In other words, that means that regardless of the illiteracy level of the country the press freedom groups are evenly dispersed. As a result, given our graphic, we are unable to clearly link illiteracy to press freedom. 
-
-
-```{r, echo=F}
-ggplot(data = data3) +geom_mosaic(aes(x=product(GROUP_press), fill = GROUP_press, conds = product(GROUP)))
+```{r, echo=FALSE}
+ggplot(data = data3) +geom_mosaic(aes(x=product(GROUP_press), fill = GROUP_press, conds = product(GROUP))) + labs(title = "Mosaic representation of illiteracy and press freedom", y= "Group press freedom", fill = "Group press freedom")
 ```
 
 
-## Illiteracy vs GDP per capita vs Life expectancy
+
+## Link between illiteracy groups, GDP per capita and life expectancy
 
 The graph below shows the relationship between life expectancy and GDP per capita conditioned on illiteracy. We can see that there is a positive relationship between GDP per capita and life expectancy. Countries with high GDP per capita tend to have higher life expectancy. Conversely, life expectancy is lower in countries with the low GDP per capita. This is not a surprising result since GDP per capita is one of many dimensions to measure living standards. Therefore, it would seem to reasonable to say that a high GDP per capita might facilitate access to good health care and and good nutrition for instance. 
 
 Furthermore, we can see that life expectancy is represented as a concave function of GDP per capita. Indeed, under a certain threshold the slope of the curve is extremely high and then extremely low. In other words, under the threshold, an additional unit of GDP per capita increases life expectancy to a large extent and above this threshold an additional unit of GDP per capita does not increase significantly life expectancy. Here we can see that this threshold is around 12 500 dollars. So this can be interpreted as follows: when the GDP per capita is below 12 500 dollars, the increase of GDP per capita highly increases life expectancy, and when GDP is above 12 500 dollars an increase of GDP per capita lightly increases life expectancy.
 
-Now let’s analyze this graph through the lens of the illiteracy variable. In the graph, illiteracy is represented by colors, and each of them corresponds to illiteracy groups. 
+Now let’s analyse this graph through the lens of the illiteracy variable. In the graphic, illiteracy is represented by colors, and each of them corresponds to illiteracy groups. We can see that group 1, the group with the lowest illiteracy rate, is the one with the highest and narrowest window of values for life expectancy, between 70 and 82 for most of them. When it comes to GDP per capita, Group 1 is a heterogeneous group, as bubbles are dispersed, but is the group with the highest GDP per capita over all. 
 
-We can see that group 1, the group with the lowest illiteracy rate, is the one with the highest and narrowest window of values for life expectancy, between 70 and 82 for most of them. When it comes to GDP per capita, Group 1 is a heterogeneous group, as bubbles are dispersed, but is the group with the highest GDP per capita over all. 
-
-As we can see, group 3, which has the greatest rate of illiteracy, also has the lowest life expectancy with the biggest range of values, between 55 and 70. This group has the lowest GDP per capita and the narrowest range of values for GDP per capita. 
-
-Group 2 is the 'middle' group, whether measured by GDP per capita or life expectancy. 
+As we can see, group 3, which has the greatest rate of illiteracy, also has the lowest life expectancy with the biggest range of values, between 55 and 70. This group has the lowest GDP per capita and the narrowest range of values for GDP per capita. Group 2 is the 'middle' group, whether measured by GDP per capita or life expectancy. 
 ```{r, echo=FALSE}
 # Joining of our data of interest
 
