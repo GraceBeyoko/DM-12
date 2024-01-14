@@ -20,10 +20,9 @@ library(ggmosaic)
 library(stargazer)
 ```
 
-
-
 ```{r, echo=FALSE, message=FALSE, warning=FALSE}
 ## Data loading 
+
 educ_expenditure <- vroom(here("data", "Expenditure on education.csv"), 
                           locale=locale(decimal_mark = "."))
 GDP_capita <- vroom(here("data", "GDP per capita.csv"), 
@@ -62,6 +61,8 @@ young_pop <- vroom(here("data", "young_population.csv"),
 
 [Here](https://github.com/GraceBeyoko/DM-12.git) is the link to our Github repository.
 
+
+
 ## Sources
 
 We used the table from the Our World in Data website for the Stability of democratic institutions index variable, available [here](https://ourworldindata.org/grapher/stability-democratic-institutions-index-bti?tab=table).
@@ -82,6 +83,8 @@ The rest of our data (GDP, GDP per capita, rural population, life expectancy at 
 
 - for youth population, we selected the "Demographic and socio-economic" category and then the "demographic indicators" section. 
 
+
+
 ## Sources description
 
 Our World in Data is a free online publication founded by Max Roser, an economist, and directed by the University of Oxford. They focus on providing comprehensive database and data visualizations to make information about global development more accessible. 
@@ -90,12 +93,12 @@ The World Bank is a financial institution that provides loans and grants to the 
 
 The United Nations Educational, Scientific and Cultural Organization (UNESCO) is a specialized agency of the United Nations established in 1945. The organization mission is to contribute to the building of peace, the eradication of poverty, sustainable development and intercultural dialogue through education, sciences and culture. One of their objectives is to ease access to data. That is why, they also produce database about education, culture, science, and communication.
 
+
+
 ## Data Cleaning 
 
-We are now cleaning the variables from the UNESCO website.
+Regarding our data cleaning, we choose to focus on having datasets that only contains relevant information. That is why, we eliminate the columns “Flags”, “Flag Codes” and “indicator codes” from the UNESCO data. Additionally, the columns “Times” and “TIMES”, are duplicate of each other (as seen in the following) so we will remove the TIMES column. Also, in the educ_expenditure dataset, the column “NATMON_IND” contains the same value each time. This brings nothing to our study so we will also remove this column. We noticed that all the datasets from the UNESCO site have the same structure, as seen below:
 
-
-All the datasets from the UNESCO site have the same structure, as seen below:
 
 The columns' names of the Expenditure on Education dataset are : `r educ_expenditure |> names()`.
 
@@ -112,20 +115,17 @@ The columns' names of the Illiteracy dataset are :`r illiteracy |> names()`.
 The columns' names of the Rural population share dataset are :`r rural |> names()`.
 
 
-That is why we can apply the same function to each to the UNESCO datasets. Here we choose to eliminate Flags, Flag Codes and the indicator codes because they do not fall in our research scope. On top of that, we can see that there are two variables, Times and TIMES, that are duplicate of each other as seen in the following. So we will also removes the TIMES column.
-
+These similarities allows us to create a function that we will apply to each to the UNESCO datasets. This function consists of removing the columns that appear twice or the ones that are full of missing values. Regarding, the other data sets that do not come from the UNESCO website (i.e the electricity, institution and the press freedom datasets), we will rename their columns for them to match the UNESCO datasets. On top of that, to ensure that they have the same format as the one from the UNSECO website, we apply pivot_longer. Also, we choose to split the Press Freedom dataset in two because it contains two indicators : press freedom index and press freedom rank. Indeed, we rather have one table per indicator.Finally, we also changed the units of the young pop dataset and the GDP dataset to millions in order for them to match the other variables.
 ```{r, echo=FALSE, results='hide'}
 sum(educ_expenditure$Time == educ_expenditure$TIME) == nrow(educ_expenditure)
 ```
 
-We see that in the educ_expenditure dataset, the column NATMON_IND contains the same value each time. So, we will also remove this column.
 ```{r, echo=FALSE, results='hide'}
 educ_expenditure |>
   distinct(NATMON_IND) |> 
   knitr::kable()
 ```
 
-We will now apply a data cleaning function to all of the UNESCO data.
 ```{r, echo=FALSE}
 datacleaning_unesco <- function(data){
     data |> select(-`Flag Codes`, - Flags, - TIME, -ends_with("IND"))
@@ -142,62 +142,36 @@ illiteracy <-datacleaning_unesco(illiteracy)
 rural <- datacleaning_unesco(rural)
 ```
 
-We change the units of the young pop dataset and the GDP dataset to millions in order for them to match the other variables. 
 ```{r, echo=FALSE}
 young_pop <- young_pop |> mutate("Value"= Value * 10^3, "Indicator"= "Population aged 15-24 years (number)")
 GDP <- GDP |> mutate("Value"= Value / 10^6, "Indicator"= "GDP, US$ (millions)")
 ```
 
-
 ```{r, echo=FALSE, results='hide'}
-#We now are doing the data cleaning of the electricity variable. 
-
 electricity |> 
   names()|>
   head(n=10) |>
   knitr::kable()
 ```
 
-
-```{r, echo=FALSE, results='hide'}
-# Here, we want to see what values these columns take. 
-
-electricity |> 
-  distinct(`Series Code`, `Series Name`) |> 
-  knitr::kable()
-```
-
-
 ```{r, echo=FALSE}
-# Because access to electricity is our variable of interest, we filter the dataset.
+# Here we remove the columns that we are not interested in
 
 electricity <- electricity |>
   filter(`Series Name`== "Access to electricity (% of population)")|> 
   select(- `Series Code`)
 ```
 
-We now are going to rename the columns of each datasets for them to match the variables from the UNESCO.
 ```{r, echo=FALSE}
 electricity <- electricity |> 
   rename("Country" = "Country Name", "LOCATION"= "Country Code", "Indicator"="Series Name")
 ```
 
-We do pivot_longer in order to have all of our datasets in the same format.
 ```{r, echo=FALSE}
 electricity <- electricity |> 
   pivot_longer(!(Indicator| Country| LOCATION)) |> 
   rename("Time"= "name", "Value"= "value") |> 
   mutate("Time"= as.numeric(substr(Time, 1, 4)))
-```
-
-
-```{r, echo=FALSE, results='hide'}
-# We now are cleaning the PressFreedom variable.
-
-PressFreedom |> 
-  names() |>
-  head(n=10) |>
-  knitr::kable()
 ```
 
 ```{r, echo=FALSE, results='hide'}
@@ -207,6 +181,8 @@ PressFreedom |>
 ```
 
 ```{r, echo=FALSE}
+# We remove the column we are not interested in 
+
 PressFreedom <- PressFreedom |> 
   select(- `Indicator ID`, - `Subindicator Type`)
 ```
@@ -221,7 +197,6 @@ PressFreedom |>
   knitr::kable()
 ```
 
-Because our PressFreedom table contains two indicators we split the table in order to have two tables representing each indicator. 
 ```{r, echo=FALSE}
 PressFreedomIndex <- PressFreedom |> filter(Indicator == "Press Freedom Index")
 PressFreedomRank <- PressFreedom |> filter(Indicator == "Press Freedom Rank")
@@ -234,20 +209,15 @@ PressFreedomIndex <- PressFreedomIndex |>
   mutate(Time = ifelse(is.na(Time), NA, as.numeric(Time))) |> filter(Time >= 2005 & Time <= 2021)
 ```
 
-
-Since our analysis is not at the individual level, we are going to only select "Both Sexes" values. Then, we will remove the columns we deem unnecessary and rename the remaining columns. 
-
- 
 ```{r, echo=FALSE}
 institution <- institution |> rename("Country" = "Entity", "LOCATION"= "Code", "Value"= "stability_dem_inst_bti", "Time"= "Year")|> mutate("Indicator"= "Stability of Institutions")
 ```
 
+
+
 ## Data description and Tables 
 
-The government expenditure on education is expressed in millions US$. 
-
-This table has `r educ_expenditure |> ncol()` columns, which are `r educ_expenditure |> names()`.
-It has `r educ_expenditure |> nrow()` rows and each of them represents a particular country at a particular year. Here is a table with basic statistics of the Expenditure on education variable.
+The government expenditure on education is expressed in millions US$. This table has `r educ_expenditure |> ncol()` columns, which are `r educ_expenditure |> names()`.It has `r educ_expenditure |> nrow()` rows and each of them represents a particular country at a particular year. Here is a table with basic statistics of the Expenditure on education variable.
 ```{r, echo=FALSE}
 educ_expenditure |> 
   filter(Country != "Holy See") |> 
@@ -258,10 +228,7 @@ educ_expenditure |>
 ```
 
 
-
-The GDP is expressed in millions US dollars and GDP per capita is expressed in US dollars.
-
-This GDP table has `r GDP |> ncol()` columns, which are `r GDP |> names()`. It has `r GDP |> nrow()` rows and each of them represents a particular country at a particular year. Here is a table with basic statistics of the GDP variable.  
+The GDP is expressed in millions US dollars and GDP per capita is expressed in US dollars.This GDP table has `r GDP |> ncol()` columns, which are `r GDP |> names()`. It has `r GDP |> nrow()` rows and each of them represents a particular country at a particular year. Here is a table with basic statistics of the GDP variable.  
 ```{r, echo=FALSE}
 GDP |> 
   group_by(Country) |> 
@@ -269,6 +236,7 @@ GDP |>
   head(n=10) |> 
   knitr::kable(caption= "Statistics of GDP (millions) per country")
 ```
+
 
 This GDP per capita  table has `r GDP_capita |> ncol()` columns, which are `r GDP_capita |> names()`. It has `r GDP_capita |> nrow()` rows and each of them represents a particular country at a particular year. Here is a table with basic statistics of the GDP per capita variable. 
 ```{r, echo=FALSE}
@@ -280,10 +248,7 @@ GDP_capita |>
 ```
 
 
-
-Life expectancy at birth is expressed in total years.
-
-This Life expectancy at birth table has `r life_expectancy|> ncol()` columns, which are `r life_expectancy |> names()`. It has `r life_expectancy|> nrow()` rows and each of them represents a particular country at a particular year. Here is a table with basic statistics of the Life expectancy at birth variable.  
+Life expectancy at birth is expressed in total years.This Life expectancy at birth table has `r life_expectancy|> ncol()` columns, which are `r life_expectancy |> names()`. It has `r life_expectancy|> nrow()` rows and each of them represents a particular country at a particular year. Here is a table with basic statistics of the Life expectancy at birth variable.  
 ```{r, echo=FALSE}
 life_expectancy |> 
   group_by(Country) |> 
@@ -292,9 +257,8 @@ life_expectancy |>
   knitr::kable(caption= "Statistics of life expectancy at birth (years) per country")
 ```
 
-The young population is expressed in number.
 
-This total young population table has `r young_pop |> ncol()` columns, which are `r young_pop |> names()`. It has `r young_pop|> nrow()` rows and each of them represents a particular country at a particular year. Here is a table with basic statistics of the young population variable. 
+The young population is expressed in number.This total young population table has `r young_pop |> ncol()` columns, which are `r young_pop |> names()`. It has `r young_pop|> nrow()` rows and each of them represents a particular country at a particular year. Here is a table with basic statistics of the young population variable. 
 ```{r, echo=FALSE, warning=FALSE}
 young_pop |> 
   filter(Country != "Falkland Islands (Malvinas)") |> 
@@ -304,9 +268,8 @@ young_pop |>
   knitr::kable(caption= "Statistics of young population per country")
 ```
 
-The total net enrolment rate  (primary school) of both sexes is expressed in percentage. 
 
-This  total net enrolment rate table has `r enrolment |> ncol()` columns, which are `r enrolment |> names()`. It has `r enrolment |> nrow()` rows and each of them represents a particular country at a particular year. Here is a table with basic statistics of the total net enrolment rate at birth variable.  
+The total net enrolment rate  (primary school) of both sexes is expressed in percentage. This  total net enrolment rate table has `r enrolment |> ncol()` columns, which are `r enrolment |> names()`. It has `r enrolment |> nrow()` rows and each of them represents a particular country at a particular year. Here is a table with basic statistics of the total net enrolment rate at birth variable.  
 ```{r, echo=FALSE}
 enrolment |> 
   filter(Country != "Holy See") |> 
@@ -316,9 +279,8 @@ enrolment |>
   knitr::kable(caption= "Statistics of enrolment per country")
 ```
 
-The Rural population  is expressed as a percentage of the total population.
 
-This Rural population share table has `r rural |> ncol()` columns, which are `r rural |> names()`. It has `r rural |> nrow()` rows and each of them represents a particular country at a particular year. Here is a table with basic statistics of the Rural population share variable.
+The Rural population  is expressed as a percentage of the total population.This Rural population share table has `r rural |> ncol()` columns, which are `r rural |> names()`. It has `r rural |> nrow()` rows and each of them represents a particular country at a particular year. Here is a table with basic statistics of the Rural population share variable.
 ```{r, echo=FALSE, warning= FALSE}
 rural |> 
   group_by(Country) |> 
@@ -327,9 +289,8 @@ rural |>
   knitr::kable(caption= "Statistics of rural population share per country")
 ```
 
-The access to electricity is measured as a percentage of the population.
 
-This access to electricity table has `r electricity |> ncol()` columns, which are `r electricity |> names()`. It has `r electricity |> nrow()` rows and each of them represents a particular country at a particular year. Here is a table with basic statistics of the access to electricity variable.  
+The access to electricity is measured as a percentage of the population.This access to electricity table has `r electricity |> ncol()` columns, which are `r electricity |> names()`. It has `r electricity |> nrow()` rows and each of them represents a particular country at a particular year. Here is a table with basic statistics of the access to electricity variable.  
 ```{r, echo=FALSE}
 electricity |> 
   group_by(Country) |> 
@@ -339,9 +300,8 @@ electricity |>
   knitr::kable(caption= "Statistics of electricity access per country")
 ```
 
-The press freedom table shows for each country their rank and index. The index used ranges from 0 to 100 with 100 being a country with the best press freedom. This Index has been created by the Reporters Without Borders(RSF).
 
-This  press freedom index table has `r PressFreedomIndex |> ncol()` columns, which are `r PressFreedomIndex |> names()`. It has `r PressFreedomIndex |> nrow()` rows and each of them represents a particular country at a particular year. Here is a table with basic statistics of the  press freedom variable.  
+The press freedom index table shows for each country their index. The index used ranges from 0 to 100 with 100 being a country with the worst press freedom. This Index has been created by the Reporters Without Borders(RSF).This  press freedom index table has `r PressFreedomIndex |> ncol()` columns, which are `r PressFreedomIndex |> names()`. It has `r PressFreedomIndex |> nrow()` rows and each of them represents a particular country at a particular year. Here is a table with basic statistics of the  press freedom variable.  
 ```{r, echo=FALSE}
 PressFreedomIndex |> group_by(Country) |> 
   summarise("min" = round(min(`Press Freedom Index`, na.rm=TRUE), 2), "median" = round(median(`Press Freedom Index`, na.rm=TRUE), 2), "max"= round(max(`Press Freedom Index`, na.rm=TRUE), 2),  "mean"= round(mean(`Press Freedom Index`, na.rm=TRUE),2)) |> 
@@ -350,10 +310,7 @@ PressFreedomIndex |> group_by(Country) |>
 ```
 
 
-
-The stability of institutions of each country is represented with the Bertelsmann Transformation Index (BTI). It ranges from 0 to 10 with 10 representing the most stable countries. This index is published by the Bertelsmann Stiftung, a German private foundation.
-
-This stability of institutions table has `r institution |> ncol()` columns, which are `r institution |> names()`. It has `r institution|> nrow()` rows and each of them represents a particular country at a particular year. Here is a table with basic statistics of the stability of institutions variable. 
+The stability of institutions of each country is represented with the Bertelsmann Transformation Index (BTI). It ranges from 0 to 10 with 10 representing the most stable countries. This index is published by the Bertelsmann Stiftung, a German private foundation. This stability of institutions table has `r institution |> ncol()` columns, which are `r institution |> names()`. It has `r institution|> nrow()` rows and each of them represents a particular country at a particular year. Here is a table with basic statistics of the stability of institutions variable. 
 ```{r, echo=FALSE}
 institution |> group_by(Country) |> 
   summarise("min" = round(min(Value, na.rm=TRUE),2), "median" = round(median(Value, na.rm=TRUE),2), "max"= round(max(Value, na.rm=TRUE), 2), "mean"= round(mean(Value, na.rm=TRUE),2)) |> 
@@ -362,41 +319,46 @@ institution |> group_by(Country) |>
 ```
 
 
+
 ## Research question description 
 
-Most people today complete secondary education, which is a major shift from past trends. In the year 1820, only 12 percent of people worldwide were literate, which is defined as the ability of reading and writing. Since then, there has been a notable reversal. The global literacy rate has risen by 4% per five years for the previous 65 years, from 42% in 1960 to 86% in 2015. Even with these advancements, a sizeable portion of the population, 14% of the global population as of 2016, remains illiterate. 
-There is debate on the reasons for this ongoing illiteracy, however elements like poverty, population increase, and ineffectual government initiatives are frequently mentioned. 
+Most people today complete secondary education, which is a major shift from past trends. In the year 1820, only 12 percent of people worldwide were literate, which is defined as the ability of reading and writing. Since then, there has been a notable reversal. The global literacy rate has risen by 4% per five years for the previous 65 years, from 42% in 1960 to 86% in 2015. Even with these advancements, a sizeable portion of the population, 14% of the global population as of 2016, remains illiterate. There is debate on the reasons for this ongoing illiteracy, however elements like poverty, population increase, and ineffectual government initiatives are frequently mentioned. 
 
 That being said, the aim of our research is not to answer the "why" question. Insufficient robustness in the methodology used prevents us from drawing conclusions about causality. Rather, we take a more observational approach, concentrating on the "who" component. 
 
 Our goal is to find traits that countries with high levels of young illiterate people have in common so that we can see trends within this group. In order to do so, we choose to focus on the young illiterate population, which is defined as those between the ages of 15 and 24. We'll be looking at this population country by country. Our main goal is to determine whether nations with high rates of youth illiteracy have something in common. 
 
-To achieve this, we have selected multiple variables that we believe provide insightful information, including institutional stability, overall population, rural population, GDP, GDP per capita, access to electricity, and the percentage of enrollment by educational level, among others. 
+To achieve this, we have selected multiple variables that we believe provide insightful information, including institutional stability, overall population, rural population, GDP, GDP per capita, access to electricity, and the percentage of enrolment by educational level, among others. 
 
 At the end of our work, we anticipate two possible outcomes. First, no obvious trends show up, indicating that the distribution of the young illiterate population is actually random and dispersed quite evenly throughout the world's population. Second, similarities are observed among countries with high levels of illiteracy which will allow us to speculate on potential explanations for illiteracy.
 
 
+
 ## Graphical representation of our target variable
 
-First, we want to have a look at the distribution over time of Illiterate demographic (15-24 years old) around the world.
-
+As stated in the introduction, there has been a significant decline in the global illiterate population over time. The graphic expressed this idea. Indeed, the number of illiterates worldwide decreased from 135 000 thousand in 2005 to approximately 9 000 thousand in 2021. 
 ```{r, echo=FALSE}
 illiteracy |> filter(Country=="World") |> ggplot(aes(x= Time, y=Value/10^3)) + geom_line() + ylab("Number of illiterates (in thousands)") + ggtitle("Evolution of Illiteracy over the years")
 ```
 
 
+
+## Size effect ?
+
+When we look at the amount of illiterate individuals by region, it is evident that this group is not dispersed equally. In fact, nearly all of the world's illiterate population live in Sub-Saharan Africa. As opposed to the Europe and Central Asia regions, which are both at the extreme ends of the spectrum. We do, however, also know that Africa has a much larger population than these two regions. Therefore, the huge number of illiterate persons in Africa may be explained by a size effect. For this reason, in the second graphic, we have chosen to examine the distribution of the illiterate population in terms of share per region. From our results, we clearly see that the distribution stays the same.
 ```{r, echo=FALSE}
 illiteracy |> filter(Country %in%  c("Sub-Saharan Africa", "Central and Eastern Europe", "South-Eastern Asia", "Central Asia", "Northern Africa and Western Asia", "Eastern and South-Eastern Asia", "Oceania (excluding Australia and New Zealand")) |> ggplot(aes(x= Time, y=Value/10^3)) + geom_col() + ylab("Number of illiterate people (in thousands)") + ggtitle("Evolution of Illiteracy over time per region") + facet_wrap(~Country)
 ```
-## Size effect ?
+
 ```{r, echo=FALSE}
-# We only had the number of illiterates and the number of young population for each country and each year. So now we create a illiteracy rate variable.
+# We only had the number of illiterates and the number of young population for each country and each year. So now we create a illiteracy rate variable
+
 illiterate_rate <- inner_join(illiteracy, young_pop, by = c("Country", "Time")) |> rename("YoungPop"= "Value.y", "Illiterate"="Value.x")
 illiterate_rate <- illiterate_rate |> mutate("illiterate_rate"= (Illiterate/YoungPop)*100) |> filter(!is.na(illiterate_rate)) |> select(-starts_with(c("LOCATION","Indicator")))
 ```
 
 ```{r, echo=FALSE}
-## We create 3 groups of countries based on illiteracy rate.
+# We create 3 groups of countries based on illiteracy rate
 
 illiterate_rate <- illiterate_rate |> group_by(Time) |> 
   mutate(GROUP = case_when(
@@ -410,31 +372,21 @@ illiterate_rate <- illiterate_rate |> group_by(Time) |>
 illiterate_rate |> group_by(Time) |> summarise("total_young_pop"= sum(YoungPop), "total_illiterate"=sum(Illiterate)) |> mutate("total_rate"=total_illiterate/total_young_pop) |> ggplot(aes(x=Time, y=total_rate)) + ylab("Percentage of illiterates") + geom_smooth(color="black") + ggtitle("Evolution of Illiteracy over the years") + geom_point()
 ```
 
-
 ```{r, echo=FALSE}
-## We represented the evolution of illiteracy conditioned by the region of the world to which countries belong. These regions were already aggregated in the illiteracy variable, but not the illiteracy rate variable we created. So we created these regions manually.
+## We represented the evolution of illiteracy conditioned by the region of the world to which countries belong. These regions were already aggregated in the illiteracy variable, but not the illiteracy rate variable we created. So we created these regions manually
 
 CentralAsia <- c("Armenia", "Azerbaijan", "Georgia", "Kazakhstan", "Kyrgyzstan", "Mongolia", "Tajikistan", "Turkmenistan", "Uzbekistan")
 
-
-
 NortAfricaAndWestAsia <- c("Algeria", "Egypt", "Libya", "Morocco", "Sudan",  "Tunisia", "Western Sahara", "Azerbaijan", "Armenia",  "Bahrain", "Cyprus", "Georgia", "Iraq", "Israel", "Jordan", "Kuwait", "Lebanon", "Oman", "Palestine",  "Qatar", "Saudi Arabia", "Syrian Arab Republic", "Turkey", "United Arab Emirates", "Yemen")
-
-
 
 SubSahara <- c("Angola", "Benin", "Botswana", "Burkina Faso", "Burundi", "Cabo Verde", "Cameroon", "Central African Republic", "Chad", "Comoros", "Congo, Democratic Republic of", "Congo, Republic of", "Cote d'Ivoire", "Equatorial Guinea", "Eritrea", "Eswatini", "Ethiopia", "Gabon", "Gambia, The", "Ghana", "Guinea", "Guinea-Bissau", "Kenya", "Lesotho", "Liberia", "Madagascar", "Malawi", "Mali", "Mauritania", "Mauritius", "Mozambique", "Namibia", "Niger", "Nigeria", "Rwanda", "Sao Tome and Principe", "Senegal", "Seychelles", "Sierra Leone", "Somalia", "South Africa", "South Sudan", "Sudan", "Tanzania", "Togo", "Uganda", "Zambia", "Zimbabwe")
 
-
 CentralAndEasternEurope <- c("Albania", "Belarus", "Bosnia and Herzegovina", "Bulgaria", "Croatia", "Czech Republic", "Estonia", "Hungary", "Kosovo", "Latvia", "Lithuania", "Moldova", "Montenegro", "North Macedonia", "Poland", "Romania", "Serbia", "Slovakia", "Slovenia", "Ukraine")
-
 
 EastAndSoutheastAsia <- c("Brunei", "Cambodia", "China", "Indonesia", "Japan", "Laos", "Malaysia", "Myanmar", "Philippines", "Singapore", "South Korea", "Thailand", "Timor-Leste", "Vietnam")
 
-
 SoutheastAsia <- c("Brunei", "Cambodia", "Indonesia", "Laos", "Malaysia", "Myanmar", "Philippines", "Singapore", "Thailand", "Timor-Leste", "Vietnam")
 ```
-
-
 
 ```{r, echo=FALSE}
 # We aggregate young population by their region to which they belong.
@@ -487,7 +439,6 @@ young_pop_SouthEastAsia <-
 young_pop_SouthEastAsia <- young_pop_SouthEastAsia |> mutate("Region"= "South East Asia")
 ```
 
-
 ```{r, echo=FALSE}
 # We aggregate illiterate population by their region to which they belong.
 
@@ -539,9 +490,9 @@ illiteracy_SouthEastAsia <-
 illiteracy_SouthEastAsia <- illiteracy_SouthEastAsia |> mutate("Region"= "South East Asia")
 ```
 
-
 ```{r, echo=FALSE}
-### Concatenation of Regions for Young Population Datasets
+# Concatenation of Regions for Young Population Datasets
+
 young_pop_regions <- rbind(young_pop_CentralAsia, young_pop_NorthAfricaAndWestAsia)
 young_pop_regions <- rbind(young_pop_regions, young_pop_SubSahara)
 young_pop_regions <- rbind(young_pop_regions, young_pop_CentralAndEasternEurope)
@@ -549,29 +500,32 @@ young_pop_regions <- rbind(young_pop_regions, young_pop_EastAndSouthEastAsia)
 young_pop_regions <- rbind(young_pop_regions, young_pop_SouthEastAsia)
 
 
-### Concatenation of Regions for Illiterate Datasets
+# Concatenation of Regions for Illiterate Datasets
+
 illiteracy_regions <- rbind(illiteracy_CentralAsia, illiteracy_NorthAfricaAndWestAsia)
 illiteracy_regions <- rbind(illiteracy_regions, illiteracy_SubSahara)
 illiteracy_regions <- rbind(illiteracy_regions, illiteracy_CentralAndEasternEurope)
 illiteracy_regions <- rbind(illiteracy_regions, illiteracy_EastAndSouthEastAsia)
 illiteracy_regions <- rbind(illiteracy_regions, illiteracy_SouthEastAsia)
 
-# We need to change columns' names before joining them.
+
+# We need to change columns' names before joining them
 
 illiteracy_regions <- illiteracy_regions |> rename("illiteracy"= "total_value")
 young_pop_regions <- young_pop_regions |> rename("young_pop"= "total_value")
 ```
 
-
 ```{r, echo=FALSE}
-### Join of both data sets
+# Join of both data sets
 
 inner_join(illiteracy_regions, young_pop_regions, by=c("Region", "Time")) |> mutate("illiterate_rate_regions"= 100*(illiteracy/young_pop)) |> select(Time, Region, illiterate_rate_regions) |> ggplot(aes(x= Time, y=illiterate_rate_regions)) + geom_col() + ylab("Illiteracy percentage") + ggtitle("Evolution of Illiteracy over time per region") + facet_wrap(~Region)
 ```
 
-Donc c'est pas tellement un effet de taille, mais on a un problème parce que la taille de notre dernier dataset est très petit. 
+
 
 ## Map
+
+We now use this world map to zoom out of the region approach. This map represents the mean percentage of illiterate people (between 2005 and 2021) per country. The gray area represented the countries with missing data. Once more, it is clear that the population of illiterates is not dispersed equally. She is concentrated in specific countries. Thanks to this observation, we decided to concentrate the remainder of our investigation in those groups as a result. To do this, we will create three groups of illiteracy: the first group will consist of the 30% of nations with the lowest rate of illiteracy, the second group will consist of the 40% of nations with a medium rate of illiteracy, and the final group will consist of the 30% of nations with the highest rate of illiteracy. 
 ```{r, echo=FALSE}
 world_map <- map_data("world")
 world_map = map_data("world") |> filter(! long > 180)
@@ -598,17 +552,19 @@ ggplot() +
   expand_limits(x = world_map$long, y = world_map$lat) +
   coord_map("moll") +
   theme_map() + ggtitle("Illustration of the world illiteracy mean rate")
-
 ```
-
 
 
 
 ## Graphical Representation 
 ```{r, echo=FALSE}
-# We create a new variable to have expenditure on education as a rate of the GDP (to avoid level effect).
+# We create a new variable to have expenditure on education as a rate of the GDP (to avoid level effect)
+
 expenditure_rate <- inner_join(educ_expenditure, GDP, by = c("Country", "Time")) |> mutate("exp_rate"= Value.x/Value.y) |> select(Country, Time, -Indicator.x, exp_rate)
+
+
 # We need to rename before joining
+
 young_pop <- young_pop |> rename("Population"= "Value")
 ```
 
@@ -618,11 +574,13 @@ young_pop <- young_pop |> rename("Population"= "Value")
 inner_join(illiterate_rate, expenditure_rate, by = c("Country", "Time")) |> inner_join(young_pop, by = c("Country", "Time")) |>  ggplot(aes(fill=as.factor(GROUP), y=exp_rate, x=as.factor(Time))) + geom_boxplot(position="dodge", alpha=0.5) + coord_flip() + guides(fill = guide_legend(title = "Group")) + labs(title = "Distribution of Expenditure on Education Rate Over Time conditionned by group",x = "Time", y = "Expenditure on Education Rate") 
 ```
 
+
+
 ## Regression : Enrolment vs Expenditure over time
 ```{r, echo=FALSE, message=FALSE, warning=FALSE}
-# Joining of our variables of interest and renaming.
-enrol_exp <- inner_join(enrolment, expenditure_rate, by=c("Country", "Time")) |> mutate("exp_rate"=exp_rate*100, "Time"=as.factor(Time)) |> rename("enrolment"="Value")
+# Joining of our variables of interest and renaming
 
+enrol_exp <- inner_join(enrolment, expenditure_rate, by=c("Country", "Time")) |> mutate("exp_rate"=exp_rate*100, "Time"=as.factor(Time)) |> rename("enrolment"="Value")
 stargazer(lm(enrolment ~ exp_rate + Time, data = enrol_exp), type="text")
 ```
 
@@ -631,33 +589,41 @@ stargazer(lm(enrolment ~ exp_rate + Time, data = enrol_exp), type="text")
 ## Illiteracy vs enrolement 
 ```{r, echo=FALSE}
 # Joining of our variables of interest
+
 inner_join(illiterate_rate, enrolment, by=c("Country", "Time")) |> filter(!is.na(GROUP)) |> ggplot(aes(x = Value, y = illiterate_rate, label = Country)) + geom_point(alpha = .3) + facet_wrap(~GROUP) + xlab("Enrolment percentage") + ylab("Illiterate percentage") + ggtitle("Link between Enrolment and illiteracy conditionned by Group")
 ```
 
 ## illiteracy vs electricity vs rural 
 ```{r, echo=FALSE}
-# renaming before joining
+# Renaming before joining
+
 rural <- rural |> rename("rural_per"="Value")
 electricity <- electricity |> rename("electricity_per"="Value")
 GDP_capita <- GDP_capita |> rename("GDP per capita"="Value")
 
-#Joining of our variables of interest
+
+# Joining of our variables of interest
 
 data2 <- inner_join(illiterate_rate, electricity, by = c("Time", "Country")) |>  inner_join(rural, by = c("Time", "Country")) |> select(rural_per, illiterate_rate, electricity_per, Time)
 
-# Creation of groups of illiteracy rate based on these thresholds.
+
+# Creation of groups of illiteracy rate based on these thresholds
+
 quantile1 <- quantile(data2$illiterate_rate, 0.3, na.rm=T)
 quantile2 <- quantile(data2$illiterate_rate, 0.7, na.rm=T)
 
-#Graph
+
+# Graph
 
 data2 |> na.omit() |> ggplot(aes(x = rural_per, y = illiterate_rate, color = electricity_per)) +  geom_point(alpha=.5) + scale_color_gradient(low = "green", high = "red") + geom_hline(yintercept = quantile1, linetype = "dashed", color = "black") + geom_hline(yintercept = quantile2, linetype = "dashed", color = "black") + labs(title = "Relation between rural, illiterate and electricity share", x = "Rural percentage", y = "Illiterate percentage") + annotate("text" , x = 80, y = .2, label = "Group 1", size = 4, color = "#505050") + annotate("text" , x = 80, y = 5, label = "Group 2", size = 4, color = "#505050") + annotate("text" , x = 80, y = 50, label = "Group 3", size = 4, color = "#505050")
 ```
 
 
+
 ## illiteracy vs PressFreedom vs Institutions 
 ```{r, echo=FALSE, warning=F}
-#Creation of groups of countries based on group of Press Freedom Index (given by Reporters Sans Frontieres)
+# Creation of groups of countries based on group of Press Freedom Index (given by Reporters Sans Frontieres). Good = 0–15 points; Satisfactory = 15–25; Problematic = 25–35; Difficult = 35–55; Very;serious = 55–100.
+
 PressFreedomIndex <- PressFreedomIndex |>
   group_by(Time) |>
   mutate(GROUP_press = case_when(
@@ -668,24 +634,27 @@ PressFreedomIndex <- PressFreedomIndex |>
     55 < `Press Freedom Index` ~ 5,
     TRUE ~ NA))
 
-#Note: Good = 0–15 points; Satisfactory = 15–25; Problematic = 25–35; Difficult = 35–55; Very;serious = 55–100.
 
 # Creation of groups of countries based on their Index of Stability of Institutions
+
 institution <- institution |> group_by(Time) |> mutate(GROUP_inst = case_when(
   `Value` <= 3 ~ 1, 
   3 < `Value` & `Value` <= 7 ~ 2, 
   7 < `Value` ~ 3,
   TRUE ~ NA))
+
+
 # Joining of our variables of interests
+
 data3 <- inner_join(illiterate_rate,PressFreedomIndex, by = c("Time", "Country")) |> inner_join(institution, by = c("Time", "Country")) |> mutate("GROUP"= as.factor(GROUP), "GROUP_press"= as.factor(GROUP_press), "GROUP_inst"= as.factor(GROUP_inst)) |> select(-starts_with(c("Indicator", "LOCATION")), -Illiterate, -YoungPop)
-
 ggplot(data = data3) +geom_mosaic(aes(x=product(GROUP_press), fill = GROUP_press, conds = product(GROUP_inst))) + facet_wrap(~GROUP) + xlab("GROUP Stability of Institutions") + ylab("GROUP of Press Freedom") + labs(fill = "GROUP of Press Freedom") + ggtitle("Link between illiteracy and institution conditionned per pressfreedom groups")
-
 ```
+
+
 
 ## Illiteracy vs GDP per capita vs Life expectancy
 ```{r, echo=FALSE}
-#joining of our data of interest
+# Joining of our data of interest
+
 inner_join(illiterate_rate,life_expectancy, by = c("Time", "Country")) |> inner_join(GDP_capita, by = c("Time", "Country")) |> mutate("GROUP"=as.factor(GROUP)) |> ggplot(aes(x=`GDP per capita`, y= Value, color = GROUP)) + geom_point(alpha=0.3, size = 5) + scale_size(range = c(.1, 24)) + theme(legend.position="bottom") + ylab("Life Expectancy") + xlab("GDP per capita") + ggtitle("Impact of GDP per capita on Life Expectancy conditionned by group") 
 ```
-
