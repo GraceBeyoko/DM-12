@@ -596,6 +596,8 @@ inner_join(illiterate_rate, enrolment, by=c("Country", "Time")) |> filter(!is.na
 ```
 
 ## illiteracy vs electricity vs rural 
+
+This representation allows us to observe that countries that belong to group 1 tend to have less rural areas which make them predominantly urban. On top of that they are also the one with the highest access to electricity (in terms of percentage). Regarding the second set of countries, they are also primarily urban but here they have a more uneven access to electricity. The rural distribution is far more varied among the countries with the highest rates of illiteracy. But the majority of those countries have low access to electricity. Looking at this graphic, the positive correlation between rural and electricity is clear. Indeed, the countries with the lowest rural areas are the ones with the highest electricity. They also happened to be the one with less illiteracy. So it appears that illiteracy is more present in rural countries. 
 ```{r, echo=FALSE}
 # Renaming before joining
 
