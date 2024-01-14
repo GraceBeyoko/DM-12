@@ -556,7 +556,9 @@ ggplot() +
 
 
 
-## Graphical Representation 
+## Graphical Representation between education expenditure and illiteracy rate (per group) over time
+
+With this boxplot representation, our goal is to compare the distribution of education expenditures among our illiteracy groups. Here, we observe that the median of the nations with the lowest rates of illiteracy (i.e group 1) is frequently found outside of the box of the countries with the highest illiteracy rate. This indicates that there is a significant difference from one another. Furthermore, we note that group 2 generally has an education expenditure between the one of group 1 and the ones of group 2. Surprisingly, we did not observe any trend when it comes to the dispersion within the groups or other key information.
 ```{r, echo=FALSE}
 # We create a new variable to have expenditure on education as a rate of the GDP (to avoid level effect)
 
